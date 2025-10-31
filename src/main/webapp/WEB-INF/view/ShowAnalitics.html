@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-<!--
-Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
-Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Html.html to edit this template
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Rendimiento | FlowTrack</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav>
+        <h2>FlowTrack</h2>
+        <a href="show-data.html" class="btn">Volver a Actividades</a>
+    </nav>
+
+    <section class="analytics">
+        <h3>Resumen de tu estado físico</h3>
+        <canvas id="chart" width="400" height="200"></canvas>
+    </section>
+
+    <script src="js/show-analytics.js"></script>
+</body>
 </html>
