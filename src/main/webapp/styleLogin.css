@@ -1,0 +1,171 @@
+/* ======== RESET ======== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ======== BODY ======== */
+body.login-page {
+  height: 100vh;
+  background: linear-gradient(135deg, #00ff88, #009e60, #1a1a1a);
+  background-size: 300% 300%;
+  animation: gradientFlow 10s ease infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ======== CONTAINER ======== */
+.container {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  padding: 50px 40px;
+  text-align: center;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ======== TITLES ======== */
+.container h1 {
+  font-size: 2.4rem;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  color: #00ff88;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+.container p {
+  font-size: 1rem;
+  color: #ccc;
+  margin-bottom: 30px;
+}
+
+/* ======== FORM ======== */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+  animation: fadeIn 1.2s ease forwards;
+}
+
+.login-form input {
+  padding: 12px 15px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+  outline: none;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 5px rgba(0, 255, 136, 0.2);
+}
+
+.login-form input::placeholder {
+  color: #bbb;
+}
+
+.login-form input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #00ff88;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+/* ======== BUTTON ======== */
+.btn-strava {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #00cc66, #00ff88);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.5);
+}
+
+.btn-strava:hover {
+  background: linear-gradient(135deg, #00e676, #00ffcc);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 255, 136, 0.6);
+}
+
+.btn-strava:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
+}
+
+.btn-strava img {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  filter: hue-rotate(90deg);
+}
+
+/* ======== LOADING STATE ======== */
+.btn-strava.loading {
+  pointer-events: none;
+  background: #00cc66;
+  opacity: 0.7;
+  position: relative;
+}
+
+.btn-strava.loading::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+/* ======== RESPONSIVE ======== */
+@media (max-width: 480px) {
+  .container {
+    padding: 40px 25px;
+  }
+
+  .btn-strava {
+    font-size: 1rem;
+    padding: 12px 20px;
+  }
+
+  .container h1 {
+    font-size: 2rem;
+  }
+
+  .login-form input {
+    font-size: 0.95rem;
+  }
+}
