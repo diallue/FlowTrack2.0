@@ -12,7 +12,7 @@ public class Shoes {
     private String id;
     private boolean primary;
     private String name;
-    private int resourceState;
+    private int resource_state;
     private double distance;
 
     public String getId() { return id; }
@@ -21,8 +21,8 @@ public class Shoes {
     public void setPrimary(boolean primary) { this.primary = primary; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public int getResourceState() { return resourceState; }
-    public void setResourceState(int resource_state) { this.resourceState = resource_state; }
+    public int getResource_state() { return resource_state; }
+    public void setResource_state(int resource_state) { this.resource_state = resource_state; }
     public double getDistance() { return distance; }
     public void setDistance(double distance) { this.distance = distance; }
 }

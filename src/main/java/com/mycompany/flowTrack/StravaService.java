@@ -6,7 +6,6 @@ package com.mycompany.flowTrack.service;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.mycompany.flowTrack.model.Activity;
 import com.mycompany.flowTrack.model.Athletes;
 
@@ -30,14 +29,12 @@ public class StravaService {
     private final ObjectMapper objectMapper;
     private final HttpClient http;
 
-    // AHORA LAS CREDENCIALES SE PASAN EN EL CONSTRUCTOR
     public StravaService(String clientId, String clientSecret) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
 
         this.objectMapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -71,7 +68,6 @@ public class StravaService {
         if (res.statusCode() / 100 != 2) {
             throw new IOException("Error exchanging code for token. HTTP " + res.statusCode() + " - " + res.body());
         }
-        // Jackson parseará la respuesta en tu clase TokenResponse
         return objectMapper.readValue(res.body(), TokenResponse.class);
     }
 
@@ -120,7 +116,6 @@ public class StravaService {
             throw new IOException("Error getting activities. HTTP " + res.statusCode() + " - " + res.body());
         }
 
-        // Jackson parseará el array JSON en una Lista de Actividades
         Activity[] arr = objectMapper.readValue(res.body(), Activity[].class);
         return Arrays.asList(arr);
     }
@@ -157,48 +152,83 @@ public class StravaService {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
-    // ---------------------------------------------------------------------
-    // Clase interna para la respuesta de Token
-    // ---------------------------------------------------------------------
-    // NOTA: Los nombres de las variables están en camelCase
-    // Jackson los mapeará automáticamente desde snake_case gracias a la
-    // configuración en el constructor.
-    // ---------------------------------------------------------------------
     public class TokenResponse {
-        private String tokenType;
-        private String accessToken;
-        private String refreshToken;
-        private Integer expiresIn;
-        private Long expiresAt;
+        private String token_type;
+        private String access_token;
+        private String refresh_token;
+        private Integer expires_in;
+        private Long expires_at;
         private Athletes athlete;
 
         // ---- Getters y Setters ----
-        public String getTokenType() { return tokenType; }
-        public void setTokenType(String tokenType) { this.tokenType = tokenType; }
+        public String getToken_type() {
+            return token_type;
+        }
 
-        public String getAccessToken() { return accessToken; }
-        public void setAccessToken(String accessToken) { this.accessToken = accessToken; }
+        public void setToken_type(String token_type) {
+            this.token_type = token_type;
+        }
 
-        public String getRefreshToken() { return refreshToken; }
-        public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
+        public String getAccess_token() {
+            return access_token;
+        }
 
-        public Integer getExpiresIn() { return expiresIn; }
-        public void setExpiresIn(Integer expiresIn) { this.expiresIn = expiresIn; }
+        public void setAccess_token(String access_token) {
+            this.access_token = access_token;
+        }
 
-        public Long getExpiresAt() { return expiresAt; }
-        public void setExpiresAt(Long expiresAt) { this.expiresAt = expiresAt; }
+        public String getRefresh_token() {
+            return refresh_token;
+        }
 
-        public Athletes getAthlete() { return athlete; }
-        public void setAthlete(Athletes athlete) { this.athlete = athlete; }
+        public void setRefresh_token(String refresh_token) {
+            this.refresh_token = refresh_token;
+        }
+
+        public Integer getExpires_in() {
+            return expires_in;
+        }
+
+        public void setExpires_in(Integer expires_in) {
+            this.expires_in = expires_in;
+        }
+
+        public Long getExpires_at() {
+            return expires_at;
+        }
+
+        public void setExpires_at(Long expires_at) {
+            this.expires_at = expires_at;
+        }
+
+        public Athletes getAthlete() {
+            return athlete;
+        }
+
+        public void setAthlete(Athletes athlete) {
+            this.athlete = athlete;
+        }
 
         @Override
         public String toString() {
             return "TokenResponse{" +
-                    "accessToken='" + accessToken + '\'' +
-                    ", refreshToken='" + refreshToken + '\'' +
-                    ", expiresIn=" + expiresIn +
+                    "access_token='" + access_token + '\'' +
+                    ", refresh_token='" + refresh_token + '\'' +
+                    ", expires_in=" + expires_in +
                     ", athlete=" + (athlete != null ? athlete.toString() : "null") +
                     '}';
         }
+    }
+
+
+    // ---------------------------------------------------------------------
+    // Ejemplo de uso (puedes quitarlo en producción)
+    // ---------------------------------------------------------------------
+    public static void main(String[] args) throws Exception {
+        // Ejemplo rápido: intercambiar code recibido por token (no recomendado en main en producción)
+        String redirectUri = "http://localhost:8080/exchange_token";
+        StravaService s = new StravaService("TU_CLIENT_ID", "TU_CLIENT_SECRET");
+        TokenResponse tr = s.exchangeCodeForToken("EL_CODE", redirectUri);
+        System.out.println("Access token: " + tr.access_token);
     }
 }

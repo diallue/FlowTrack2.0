@@ -13,7 +13,7 @@ import java.util.List;
 public class Athletes {
     private long id;
     private String username;
-    private int resourceState;
+    private int resource_state;
     private String firstname;
     private String lastname;
     private String city;
@@ -21,17 +21,17 @@ public class Athletes {
     private String country;
     private String sex;
     private boolean premium;
-    private String createdAt;
-    private String updatedAt;
-    private int badgeTypeId;
-    private String profileMedium;
+    private String created_at;
+    private String updated_at;
+    private int badge_type_id;
+    private String profile_medium;
     private String profile;
-    private Integer followerCount;
-    private Integer friendCount;
-    private Integer mutualFriendCount;
-    private int athleteType;
-    private String datePreference;
-    private String measurementPreference;
+    private Integer follower_count;
+    private Integer friend_count;
+    private Integer mutual_friend_count;
+    private int athlete_type;
+    private String date_preference;
+    private String measurement_preference;
     private List<Clubs> clubs;
     private Integer ftp;
     private Double weight;
@@ -42,8 +42,8 @@ public class Athletes {
     public void setId(long id) { this.id = id; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-    public int getResourceState() { return resourceState; }
-    public void setResourceState(int resourceState) { this.resourceState = resourceState; }
+    public int getResource_state() { return resource_state; }
+    public void setResource_state(int resource_state) { this.resource_state = resource_state; }
     public String getFirstname() { return firstname; }
     public void setFirstname(String firstname) { this.firstname = firstname; }
     public String getLastname() { return lastname; }
@@ -58,28 +58,28 @@ public class Athletes {
     public void setSex(String sex) { this.sex = sex; }
     public boolean isPremium() { return premium; }
     public void setPremium(boolean premium) { this.premium = premium; }
-    public String getCreatedAt() { return createdAt; }
-    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
-    public String getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
-    public int getBadgeTypeId() { return badgeTypeId; }
-    public void setBadgeTypeId(int badgeTypeId) { this.badgeTypeId = badgeTypeId; }
-    public String getProfileMedium() { return profileMedium; }
-    public void setProfileMedium(String profileMedium) { this.profileMedium = profileMedium; }
+    public String getCreated_at() { return created_at; }
+    public void setCreated_at(String created_at) { this.created_at = created_at; }
+    public String getUpdated_at() { return updated_at; }
+    public void setUpdated_at(String updated_at) { this.updated_at = updated_at; }
+    public int getBadge_type_id() { return badge_type_id; }
+    public void setBadge_type_id(int badge_type_id) { this.badge_type_id = badge_type_id; }
+    public String getProfile_medium() { return profile_medium; }
+    public void setProfile_medium(String profile_medium) { this.profile_medium = profile_medium; }
     public String getProfile() { return profile; }
     public void setProfile(String profile) { this.profile = profile; }
-    public Integer getFollowerCount() { return followerCount; }
-    public void setFollowerCount(Integer followerCount) { this.followerCount = followerCount; }
-    public Integer getFriendCount() { return friendCount; }
-    public void setFriendCount(Integer friendCount) { this.friendCount = friendCount; }
-    public Integer getMutualFriendCount() { return mutualFriendCount; }
-    public void setMutualFriendCount(Integer mutualFriendCount) { this.mutualFriendCount = mutualFriendCount; }
-    public int getAthleteType() { return athleteType; }
-    public void setAthleteType(int athleteType) { this.athleteType = athleteType; }
-    public String getDatePreference() { return datePreference; }
-    public void setDatePreference(String datePreference) { this.datePreference = datePreference; }
-    public String getMeasurementPreference() { return measurementPreference; }
-    public void setMeasurementPreference(String measurementPreference) { this.measurementPreference = measurementPreference; }
+    public Integer getFollower_count() { return follower_count; }
+    public void setFollower_count(Integer follower_count) { this.follower_count = follower_count; }
+    public Integer getFriend_count() { return friend_count; }
+    public void setFriend_count(Integer friend_count) { this.friend_count = friend_count; }
+    public Integer getMutual_friend_count() { return mutual_friend_count; }
+    public void setMutual_friend_count(Integer mutual_friend_count) { this.mutual_friend_count = mutual_friend_count; }
+    public int getAthlete_type() { return athlete_type; }
+    public void setAthlete_type(int athlete_type) { this.athlete_type = athlete_type; }
+    public String getDate_preference() { return date_preference; }
+    public void setDate_preference(String date_preference) { this.date_preference = date_preference; }
+    public String getMeasurement_preference() { return measurement_preference; }
+    public void setMeasurement_preference(String measurement_preference) { this.measurement_preference = measurement_preference; }
     public List<Clubs> getClubs() { return clubs; }
     public void setClubs(List<Clubs> clubs) { this.clubs = clubs; }
     public Integer getFtp() { return ftp; }

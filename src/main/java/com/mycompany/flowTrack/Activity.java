@@ -1160,6 +1160,177 @@ public class Activity {
     }
     
     /**
+     * @brief Crea una instancia de Activity a partir de un JsonObject de la API de Strava.
+     * @details Este método actúa como un "factory" que parsea la respuesta JSON
+     * de Strava y mapea los campos a los atributos de esta clase.
+     * Maneja la verificación de campos nulos o inexistentes.
+     * @param activityData El objeto JSON que representa una actividad de Strava.
+     * @return Una nueva instancia de Activity poblada con los datos del JSON.
+     */
+    public static Activity fromStravaAPI(JsonObject activityData) {
+        Activity activity = new Activity();
+        
+        // IDs
+        activity.setId(activityData.get("id").getAsLong());
+        activity.setResourceState(activityData.get("resource_state").getAsInt());
+        
+        if (activityData.has("external_id") && !activityData.get("external_id").isJsonNull()) {
+            activity.setExternalId(activityData.get("external_id").getAsString());
+        }
+        
+        if (activityData.has("upload_id") && !activityData.get("upload_id").isJsonNull()) {
+            activity.setUploadId(activityData.get("upload_id").getAsLong());
+        }
+        
+        // Atleta
+        if (activityData.has("athlete")) {
+            JsonObject athlete = activityData.getAsJsonObject("athlete");
+            activity.setAthleteId(athlete.get("id").getAsLong());
+        }
+        
+        // Información básica
+        activity.setName(activityData.get("name").getAsString());
+        
+        if (activityData.has("description") && !activityData.get("description").isJsonNull()) {
+            activity.setDescription(activityData.get("description").getAsString());
+        }
+        
+        activity.setType(activityData.get("type").getAsString());
+        activity.setSportType(activityData.get("sport_type").getAsString());
+        
+        // Distancias y tiempos
+        activity.setDistance(activityData.get("distance").getAsFloat());
+        activity.setMovingTime(activityData.get("moving_time").getAsInt());
+        activity.setElapsedTime(activityData.get("elapsed_time").getAsInt());
+        activity.setTotalElevationGain(activityData.get("total_elevation_gain").getAsFloat());
+        
+        // Fechas
+        if (activityData.has("start_date")) {
+            activity.setStartDate(ZonedDateTime.parse(activityData.get("start_date").getAsString()));
+        }
+        
+        if (activityData.has("start_date_local")) {
+            activity.setStartDateLocal(LocalDateTime.parse(
+                    activityData.get("start_date_local").getAsString(),
+                    DateTimeFormatter.ISO_DATE_TIME
+            ));
+        }
+        
+        if (activityData.has("timezone") && !activityData.get("timezone").isJsonNull()) {
+            activity.setTimezone(activityData.get("timezone").getAsString());
+        }
+        
+        if (activityData.has("utc_offset")) {
+            activity.setUtcOffset(activityData.get("utc_offset").getAsFloat());
+        }
+        
+        // Ubicación
+        if (activityData.has("start_latlng") && !activityData.get("start_latlng").isJsonNull()) {
+            JsonArray latlng = activityData.getAsJsonArray("start_latlng");
+            List<Float> coords = new ArrayList<>();
+            coords.add(latlng.get(0).getAsFloat());
+            coords.add(latlng.get(1).getAsFloat());
+            activity.setStartLatlng(coords);
+        }
+        
+        if (activityData.has("end_latlng") && !activityData.get("end_latlng").isJsonNull()) {
+            JsonArray latlng = activityData.getAsJsonArray("end_latlng");
+            List<Float> coords = new ArrayList<>();
+            coords.add(latlng.get(0).getAsFloat());
+            coords.add(latlng.get(1).getAsFloat());
+            activity.setEndLatlng(coords);
+        }
+        
+        // Estadísticas
+        if (activityData.has("average_speed")) {
+            activity.setAverageSpeed(activityData.get("average_speed").getAsFloat());
+        }
+        
+        if (activityData.has("max_speed")) {
+            activity.setMaxSpeed(activityData.get("max_speed").getAsFloat());
+        }
+        
+        if (activityData.has("average_cadence") && !activityData.get("average_cadence").isJsonNull()) {
+            activity.setAverageCadence(activityData.get("average_cadence").getAsFloat());
+        }
+        
+        if (activityData.has("average_temp") && !activityData.get("average_temp").isJsonNull()) {
+            activity.setAverageTemp(activityData.get("average_temp").getAsFloat());
+        }
+        
+        if (activityData.has("average_watts") && !activityData.get("average_watts").isJsonNull()) {
+            activity.setAverageWatts(activityData.get("average_watts").getAsFloat());
+        }
+        
+        if (activityData.has("weighted_average_watts") && !activityData.get("weighted_average_watts").isJsonNull()) {
+            activity.setWeightedAverageWatts(activityData.get("weighted_average_watts").getAsInt());
+        }
+        
+        if (activityData.has("kilojoules") && !activityData.get("kilojoules").isJsonNull()) {
+            activity.setKilojoules(activityData.get("kilojoules").getAsFloat());
+        }
+        
+        if (activityData.has("max_watts") && !activityData.get("max_watts").isJsonNull()) {
+            activity.setMaxWatts(activityData.get("max_watts").getAsInt());
+        }
+        
+        if (activityData.has("calories") && !activityData.get("calories").isJsonNull()) {
+            activity.setCalories(activityData.get("calories").getAsFloat());
+        }
+        
+        // Elevación
+        if (activityData.has("elev_high") && !activityData.get("elev_high").isJsonNull()) {
+            activity.setElevHigh(activityData.get("elev_high").getAsFloat());
+        }
+        
+        if (activityData.has("elev_low") && !activityData.get("elev_low").isJsonNull()) {
+            activity.setElevLow(activityData.get("elev_low").getAsFloat());
+        }
+        
+        // Flags
+        activity.setTrainer(activityData.get("trainer").getAsBoolean());
+        activity.setCommute(activityData.get("commute").getAsBoolean());
+        activity.setManual(activityData.get("manual").getAsBoolean());
+        activity.setPrivateActivity(activityData.get("private").getAsBoolean());
+        activity.setFlagged(activityData.get("flagged").getAsBoolean());
+        activity.setHasHeartrate(activityData.get("has_heartrate").getAsBoolean());
+        
+        if (activityData.has("device_watts")) {
+            activity.setDeviceWatts(activityData.get("device_watts").getAsBoolean());
+        }
+        
+        activity.setHasKudoed(activityData.get("has_kudoed").getAsBoolean());
+        
+        // Contadores
+        activity.setAchievementCount(activityData.get("achievement_count").getAsInt());
+        activity.setKudosCount(activityData.get("kudos_count").getAsInt());
+        activity.setCommentCount(activityData.get("comment_count").getAsInt());
+        activity.setAthleteCount(activityData.get("athlete_count").getAsInt());
+        activity.setPhotoCount(activityData.get("photo_count").getAsInt());
+        activity.setTotalPhotoCount(activityData.get("total_photo_count").getAsInt());
+        activity.setPrCount(activityData.get("pr_count").getAsInt());
+        
+        // Otros
+        if (activityData.has("gear_id") && !activityData.get("gear_id").isJsonNull()) {
+            activity.setGearId(activityData.get("gear_id").getAsString());
+        }
+        
+        if (activityData.has("workout_type") && !activityData.get("workout_type").isJsonNull()) {
+            activity.setWorkoutType(activityData.get("workout_type").getAsInt());
+        }
+        
+        if (activityData.has("device_name") && !activityData.get("device_name").isJsonNull()) {
+            activity.setDeviceName(activityData.get("device_name").getAsString());
+        }
+        
+        if (activityData.has("embed_token") && !activityData.get("embed_token").isJsonNull()) {
+            activity.setEmbedToken(activityData.get("embed_token").getAsString());
+        }
+        
+        return activity;
+    }
+    
+    /**
      * @brief Genera una representación en String de la actividad.
      * @details Muestra un resumen de los campos más importantes de la actividad
      * (ID, nombre, tipo, distancia, tiempo, fecha).
