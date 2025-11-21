@@ -6,19 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
         "&redirect_uri=http://localhost:8080/exchange_token" +
         "&scope=activity:read_all";
 
-    const form = document.getElementById("login-form");
+    const btn = document.getElementById("login-strava");
 
-    form.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-
-        // ⚠️ Solo demostrativo: Strava no permite autenticación directa por usuario/contraseña.
-        console.log("Usuario:", username);
-        console.log("Contraseña:", password);
-
-        // Simular login exitoso y redirigir al flujo OAuth
+    btn.addEventListener("click", () => {
         window.location.href = stravaAuthUrl;
     });
 });
