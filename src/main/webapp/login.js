@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "https://www.strava.com/oauth/authorize" +
         "?client_id=177549" +
         "&response_type=code" +
-        "&redirect_uri=http://localhost:8080/exchange_token" +
+        "&redirect_uri=http://localhost:8080/FlowTrack/exchange_token" +
         "&scope=activity:read_all";
 
     const btn = document.getElementById("login-strava");

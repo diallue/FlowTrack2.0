@@ -58,7 +58,7 @@ public class StravaCallbackServlet extends HttpServlet {
 
         try {
             // 2. Intercambiar el código por tokens
-            String redirectUri = "http://localhost:8080/exchange_token";
+            String redirectUri = "http://localhost:8080/FlowTrack/exchange_token";
             TokenResponse tokenResponse = stravaService.exchangeCodeForToken(code, redirectUri);
 
             // 3. ¡Éxito! Ahora tenemos los tokens y los datos del atleta
