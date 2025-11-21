@@ -157,6 +157,18 @@ public class StravaService {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
+    public Activity getActivity(String accessToken, long activityId) throws IOException, InterruptedException {
+        String url = "https://www.strava.com/api/v3/activities/" + activityId;
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build();
+        HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (res.statusCode() != 200) throw new IOException("Error fetching activity");
+        return objectMapper.readValue(res.body(), Activity.class);
+    }
+
     // ---------------------------------------------------------------------
     // Clase interna para la respuesta de Token
     // ---------------------------------------------------------------------
