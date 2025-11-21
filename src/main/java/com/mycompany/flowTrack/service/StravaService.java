@@ -176,7 +176,7 @@ public class StravaService {
     // Jackson los mapeará automáticamente desde snake_case gracias a la
     // configuración en el constructor.
     // ---------------------------------------------------------------------
-    public class TokenResponse {
+    public static class TokenResponse {
         private String tokenType;
         private String accessToken;
         private String refreshToken;

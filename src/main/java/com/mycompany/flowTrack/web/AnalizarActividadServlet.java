@@ -35,7 +35,7 @@ public class AnalizarActividadServlet extends HttpServlet {
         String stravaClientSecret = "17af0ae01a69783ef0981bcea389625c3300803e";
         
         // Token de tu cuenta de Cycling Analytics (Obtenlo en tu perfil de CA)
-        String cyclingAnalyticsToken = "TU_TOKEN_DE_CYCLING_ANALYTICS"; 
+        String cyclingAnalyticsToken = "5565638"; 
 
         this.stravaService = new StravaService(stravaClientId, stravaClientSecret);
         this.analyticsService = new CyclingAnalyticsService(cyclingAnalyticsToken);
