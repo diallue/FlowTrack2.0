@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FlowTrack — Mis actividades (Strava)</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./mis-actividades.css" />
+
+  <!-- Leaflet (mapas) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-sA+e2b8rYk3yX9n0T1X0H1jvllb4jz8Y1l+3wHk8wYQ=" crossorigin=""/>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-Vx2bNI1z0sWbGfIZu6p+v8hba8yV3px6b6Xk9N3m0mM=" crossorigin=""></script>
+</head>
+<body class="activities-page">
+
+  <header class="topbar">
+    <div class="brand">FlowTrack</div>
+    <div class="actions">
+      <button id="refresh-all" title="Refrescar actividades">🔄</button>
+      <button id="logout" title="Cerrar sesión">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="sidebar">
+      <h2>Filtros</h2>
+
+      <label>
+        Tipo
+        <select id="filter-type">
+          <option value="">Todos</option>
+          <option value="Ride">Ride</option>
+          <option value="Run">Run</option>
+          <option value="VirtualRide">VirtualRide</option>
+          <option value="Walk">Walk</option>
+        </select>
+      </label>
+
+      <label>
+        Fecha desde
+        <input type="date" id="filter-date-from" />
+      </label>
+
+      <label>
+        Fecha hasta
+        <input type="date" id="filter-date-to" />
+      </label>
+
+      <label>
+        Distancia mínima (km)
+        <input type="number" id="filter-distance-min" min="0" step="0.1" placeholder="0" />
+      </label>
+
+      <label>
+        Buscar (nombre)
+        <input type="search" id="filter-search" placeholder="p.ej. salida fin de semana" />
+      </label>
+
+      <div class="sidebar-row">
+        <button id="apply-filters">Aplicar</button>
+        <button id="clear-filters" class="ghost">Limpiar</button>
+      </div>
+
+      <hr/>
+
+      <div class="meta">
+        <small id="total-activities">Actividades: —</small>
+        <small id="loaded-page">Página: —</small>
+      </div>
+
+      <div class="sidebar-row">
+        <button id="export-csv">Exportar CSV (cargadas)</button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div id="list-controls" class="list-controls">
+        <label>
+          Ordenar por
+          <select id="sort-by">
+            <option value="start_date_local_desc">Fecha (reciente)</option>
+            <option value="start_date_local_asc">Fecha (antigua)</option>
+            <option value="distance_desc">Distancia (mayor)</option>
+            <option value="elapsed_time_desc">Duración (mayor)</option>
+          </select>
+        </label>
+
+        <div id="search-summary" class="search-summary"></div>
+      </div>
+
+      <div id="activities" class="activities-grid">
+        <!-- tarjetas insertadas por JS -->
+      </div>
+
+      <div id="list-status" class="list-status">
+        <button id="load-more" class="btn">Cargar más</button>
+        <div id="loading-indicator" class="loading hidden">Cargando...</div>
+        <div id="no-more" class="hidden">No hay más actividades.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal de detalle -->
+  <div id="activity-modal" class="modal hidden" role="dialog" aria-hidden="true">
+    <div class="modal-panel">
+      <button id="modal-close" class="modal-close" title="Cerrar">✕</button>
+      <div class="modal-content">
+
+        <div class="activity-head">
+          <div>
+            <h3 id="act-title">Actividad</h3>
+            <div id="act-subtitle" class="muted"></div>
+          </div>
+          <div class="activity-actions">
+            <button id="open-raw">Ver JSON</button>
+            <button id="export-activity-csv">Exportar CSV</button>
+          </div>
+        </div>
+
+        <div class="activity-body">
+          <div id="map" class="map"></div>
+
+          <div class="charts">
+            <canvas id="chart-elevation" class="chart" height="160"></canvas>
+            <canvas id="chart-speed" class="chart" height="160"></canvas>
+            <canvas id="chart-hr" class="chart" height="120"></canvas>
+          </div>
+
+          <div id="activity-stats" class="stats">
+            <!-- estadísticos clave insertados por JS -->
+          </div>
+        </div>
+
+        <pre id="raw-json" class="raw-json hidden"></pre>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <small>FlowTrack — Datos provistos por Strava</small>
+  </footer>
+
+  <script src="./mis-actividades.js" type="module"></script>
+</body>
+</html>
