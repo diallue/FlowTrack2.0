@@ -94,7 +94,7 @@ public class StravaCallbackServlet extends HttpServlet {
             session.setAttribute("USUARIO_LOGEADO", miUsuario);
 
             // 5. Redirigir al usuario a la página de actividades
-            response.sendRedirect("/mis-actividades.jsp"); // O como se llame tu página
+            response.sendRedirect("/mis-actividades.html"); // O como se llame tu página
 
         } catch (Exception e) {
             e.printStackTrace();
