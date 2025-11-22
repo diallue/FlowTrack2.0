@@ -17,13 +17,14 @@ const API = {
     if (filters.q) params.set('q', filters.q);
     if (filters.sort) params.set('sort', filters.sort);
 
-    return fetch(`/api/strava/activities?${params.toString()}`, { credentials: 'same-origin' })
+    return fetch(`./api/activities?${params.toString()}`, { credentials: 'same-origin' })
       .then(checkJson);
   },
 
   getStreams: (activityId, keys = 'time,latlng,altitude,velocity_smooth,heartrate,watts,cadence', keyByType = true) => {
     const params = new URLSearchParams({ keys, key_by_type: keyByType ? 'true' : 'false' });
-    return fetch(`/api/strava/activities/${activityId}/streams?${params.toString()}`, { credentials: 'same-origin' })
+    params.set('d', activityId);
+    return fetch(`./api/streams?${params.toString()}`, { credentials: 'same-origin' })
       .then(checkJson);
   }
 };
@@ -184,7 +185,13 @@ async function loadNextPage(){
     el.loadedPage.textContent = `Página: ${state.page - 1}`;
   } catch (err){
     console.error('Error cargando actividades', err);
-    alert('Error cargando actividades: ' + (err.message || err));
+    const mensaje = err.error || err.message || JSON.stringify(err);
+    alert('Detalle del error: ' + mensaje);
+    
+    // Si el error es de autenticación, mandamos al login
+    if (mensaje === "No autenticado" || mensaje.includes("Usuario no autenticado")) {
+        window.location.href = './login.html';
+    }
   } finally {
     state.loading = false;
     showLoading(false);
@@ -474,9 +481,9 @@ function init(){
   document.getElementById('logout').addEventListener('click', async () => {
     // call backend logout if exists
     try {
-      await fetch('/logout', { method: 'POST', credentials: 'same-origin' });
+      await fetch('./logout', { method: 'POST', credentials: 'same-origin' });
     } catch (e) {}
-    window.location.href = '/login.jsp';
+    window.location.href = '/login.html';
   });
 }
 
