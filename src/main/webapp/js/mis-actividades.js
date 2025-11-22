@@ -84,7 +84,7 @@ el.clearFilters.addEventListener('click', () => clearFilters());
 el.exportCsv.addEventListener('click', () => exportActivitiesCSV(state.activities));
 el.sortBy.addEventListener('change', (e)=>{ state.sort = e.target.value; reloadAll(); });
 el.refreshBtn.addEventListener('click', ()=> reloadAll());
-el.modalClose.addEventListener('click', ()=> hideModal());
+//el.modalClose.addEventListener('click', ()=> hideModal());
 document.getElementById('activities').addEventListener('click', onActivityClick);
 
 // Debounce search input
@@ -115,9 +115,15 @@ function renderActivities(list, append = true){
   if (!append) el.activities.innerHTML = '';
   const frag = document.createDocumentFragment();
   list.forEach(act => {
+    const cardLink = document.createElement('a');
+    cardLink.className = 'activity-card-link'; // Clase opcional para quitar subrayado en CSS
+    cardLink.href = `actividad.html?id=${act.id}`; // <-- ENLACE A LA NUEVA PÁGINA
+    cardLink.style.textDecoration = 'none';
+    cardLink.style.color = 'inherit';
+    cardLink.style.display = 'block';
+
     const card = document.createElement('div');
     card.className = 'activity-card';
-    card.dataset.id = act.id;
 
     const title = document.createElement('div');
     title.className = 'act-title';
@@ -150,6 +156,8 @@ function renderActivities(list, append = true){
     card.appendChild(statsRow);
 
     frag.appendChild(card);
+    cardLink.appendChild(card);
+    frag.appendChild(cardLink);
   });
   el.activities.appendChild(frag);
 }

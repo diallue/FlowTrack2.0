@@ -107,11 +107,22 @@ public class StravaService {
      * perPage: número de resultados por página (max 200 según Strava docs).
      * page: página (1..n)
      */
-    public List<Activity> getActivities(String accessToken, int perPage, int page) throws IOException, InterruptedException {
-        String url = String.format("https://www.strava.com/api/v3/athlete/activities?per_page=%d&page=%d", perPage, page);
+    public List<Activity> getActivities(String accessToken, int perPage, int page, Long before, Long after) throws IOException, InterruptedException {
+        // Construimos la URL base
+        StringBuilder urlBuilder = new StringBuilder("https://www.strava.com/api/v3/athlete/activities");
+        urlBuilder.append("?per_page=").append(perPage);
+        urlBuilder.append("&page=").append(page);
+        
+        // Añadimos filtros de fecha si existen
+        if (before != null) {
+            urlBuilder.append("&before=").append(before);
+        }
+        if (after != null) {
+            urlBuilder.append("&after=").append(after);
+        }
 
         HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(urlBuilder.toString()))
                 .header("Authorization", "Bearer " + accessToken)
                 .GET()
                 .build();
@@ -125,6 +136,11 @@ public class StravaService {
         Activity[] arr = objectMapper.readValue(res.body(), Activity[].class);
         return Arrays.asList(arr);
     }
+    
+    public List<Activity> getActivities(String accessToken, int perPage, int page) throws IOException, InterruptedException {
+        return getActivities(accessToken, perPage, page, null, null);
+    }
+    
 
     /**
      * Obtiene streams (time series) de una actividad.

@@ -4,6 +4,7 @@
  */
 package com.mycompany.flowTrack.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mycompany.flowTrack.model.Athletes;
 import com.mycompany.flowTrack.model.User;
 import com.mycompany.flowTrack.service.StravaService;
@@ -26,12 +27,15 @@ public class StravaCallbackServlet extends HttpServlet {
 
     private final String STRAVA_CLIENT_ID = "177549";
     private final String STRAVA_CLIENT_SECRET = "17af0ae01a69783ef0981bcea389625c3300803e";
+    private ObjectMapper objectMapper;
     
     private StravaService stravaService;
 
     @Override
     public void init() throws ServletException {
+        this.objectMapper = new ObjectMapper();
         this.stravaService = new StravaService(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET);
+        this.objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
 
     @Override
