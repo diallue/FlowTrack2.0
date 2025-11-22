@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FlowTrack — Análisis de Actividad</title>
+
+  <link rel="stylesheet" href="./css/mis-actividades.css" /> 
+  <link rel="stylesheet" href="./css/actividad.css" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="activities-page detail-view">
+
+  <header class="topbar">
+    <div class="brand"><a href="mis-actividades.html">FlowTrack</a> / Análisis</div>
+    <div class="actions">
+        <a href="mis-actividades.html" class="btn-ghost">← Volver</a>
+    </div>
+  </header>
+
+  <main class="main-detail">
+      
+    <section class="detail-header card-panel">
+        <h1 id="act-title">Cargando...</h1>
+        <div class="detail-meta" id="act-meta">
+            </div>
+    </section>
+
+    <div class="detail-grid">
+        
+        <section class="metrics-panel card-panel">
+            <h2>Rendimiento (Cycling Analytics)</h2>
+            <div class="metrics-grid" id="metrics-container">
+                <div class="loading-placeholder">Cargando análisis...</div>
+            </div>
+        </section>
+
+        <div class="visuals-column">
+            <section class="map-panel card-panel">
+                <div id="map-detail" class="map-container"></div>
+            </section>
+            
+            <section class="chart-panel card-panel">
+                <h2>Curva de Potencia Crítica</h2>
+                <div class="chart-container-wrapper">
+                    <canvas id="power-curve-chart"></canvas>
+                </div>
+            </section>
+        </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <small>FlowTrack — Análisis potenciado por Strava y Cycling Analytics</small>
+  </footer>
+
+  <script src="./js/actividad.js" type="module"></script>
+</body>
+</html>

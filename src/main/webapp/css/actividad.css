@@ -1,0 +1,113 @@
+/* webapp/css/actividad.css */
+
+.detail-view .main-detail {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Clase utilitaria para paneles tipo tarjeta */
+.card-panel {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+/* Encabezado */
+.detail-header h1 {
+    margin: 0 0 10px 0;
+    color: var(--accent);
+}
+.detail-meta {
+    color: var(--muted);
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+}
+.btn-ghost {
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.btn-ghost:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+/* Grid Principal (2 columnas en escritorio) */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr; /* Izquierda más estrecha, derecha más ancha */
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .detail-grid {
+        grid-template-columns: 1fr; /* Una columna en móvil/tablet */
+    }
+}
+
+/* Sección Métricas */
+.metrics-panel h2, .chart-panel h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.metric-card {
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+.metric-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 5px;
+}
+.metric-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+.metric-unit {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+/* Columna Derecha (Visuales) */
+.visuals-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.map-container {
+    height: 350px;
+    border-radius: 8px;
+    z-index: 1; /* Para que no tape el menú si se abre */
+}
+
+.chart-container-wrapper {
+    height: 300px;
+    position: relative;
+}
