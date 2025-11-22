@@ -37,7 +37,8 @@ public class StravaService {
 
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .findAndRegisterModules();
 
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
