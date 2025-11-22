@@ -491,7 +491,7 @@ function init(){
     try {
       await fetch('./logout', { method: 'POST', credentials: 'same-origin' });
     } catch (e) {}
-    window.location.href = '/login.html';
+    window.location.href = './login.html';
   });
 }
 
