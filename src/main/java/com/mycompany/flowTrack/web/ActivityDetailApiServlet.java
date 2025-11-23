@@ -70,7 +70,8 @@ public class ActivityDetailApiServlet extends HttpServlet {
 
             // 2. Obtener Streams para mapas y gráficas (Funciona correctamente)
             // Pedimos watts, latlng (mapa), time (eje X gráfica), altitude (perfil)
-            String streamsKeys = "watts,latlng,time,altitude,heartrate,cadence";
+            
+            String streamsKeys = "time,latlng,watts,altitude,heartrate,cadence,velocity_smooth";
             // Usamos key_by_type=true para que sea más fácil de usar en el JS
             String streamsJsonRaw = stravaService.getActivityStreams(stravaToken, activityId, streamsKeys, true);
             Object streamsData = objectMapper.readValue(streamsJsonRaw, Object.class);
