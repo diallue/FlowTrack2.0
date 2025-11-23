@@ -76,13 +76,9 @@ function formatTime(s){ const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), s
 function dateShort(d){ return new Date(d).toLocaleString(); }
 
 function renderActivities(list, append=true){
-  if (!append) el.activities.innerHTML=''; 
+  if (!append) el.activities.innerHTML='';
   const frag = document.createDocumentFragment();
-
   list.forEach(act=>{
-    // Evitar duplicados reales
-    if(state.activities.some(a => a.id === act.id)) return;
-
     const cardLink=document.createElement('a');
     cardLink.className='activity-card-link';
     cardLink.href=`actividad.html?id=${act.id}`;
@@ -106,10 +102,7 @@ function renderActivities(list, append=true){
     card.appendChild(meta);
     cardLink.appendChild(card);
     frag.appendChild(cardLink);
-
-    state.activities.push(act); // añadir solo si no está duplicado
   });
-
   el.activities.appendChild(frag);
 }
 
@@ -117,20 +110,11 @@ async function loadNextPage(){
   if (state.loading || state.reachedEnd) return;
   state.loading=true;
   showLoading(true);
-
   try {
-    // Guardar la página actual y pedirla
-    const currentPage = state.page;
-    const resp = await API.listActivities(state.perPage, currentPage, {...state.filters, sort: state.sort});
+    const resp = await API.listActivities(state.perPage, state.page, {...state.filters, sort: state.sort});
     const activities = Array.isArray(resp) ? resp : (resp.activities||[]);
-
-    if (activities.length === 0){
-      state.reachedEnd = true;
-      el.noMore.classList.remove('hidden');
-    } else {
-      renderActivities(activities, true);
-      state.page += 1; // Incrementar solo si hay nuevas actividades
-    }
+    if (activities.length===0){ state.reachedEnd=true; el.noMore.classList.remove('hidden'); }
+    else { renderActivities(activities,true); state.activities.push(...activities); state.page+=1; }
 
     el.totalActivities.textContent=`Actividades (cargadas): ${state.activities.length}`;
     el.loadedPage.textContent=`Página: ${state.page-1}`;
@@ -139,21 +123,10 @@ async function loadNextPage(){
     const mensaje=err.error||err.message||JSON.stringify(err);
     alert('Detalle del error: '+mensaje);
     if (mensaje==="No autenticado"||mensaje.includes("Usuario no autenticado")) window.location.href='./login.html';
-  } finally { 
-    state.loading=false; 
-    showLoading(false); 
-  }
+  } finally { state.loading=false; showLoading(false); }
 }
 
-function showLoading(v){
-  if(v){ 
-    el.loadingIndicator.classList.remove('hidden'); 
-    el.loadMore.disabled=true; 
-  } else { 
-    el.loadingIndicator.classList.add('hidden'); 
-    el.loadMore.disabled=false; 
-  } 
-}
+function showLoading(v){ if(v){ el.loadingIndicator.classList.remove('hidden'); el.loadMore.disabled=true; } else { el.loadingIndicator.classList.add('hidden'); el.loadMore.disabled=false; } }
 
 function applyFilters(){
   const type=el.filterType.value;
@@ -172,14 +145,7 @@ function clearFilters(){
   reloadAll();
 }
 
-function reloadAll(){
-  state.page=1; 
-  state.activities=[]; 
-  state.reachedEnd=false; 
-  el.noMore.classList.add('hidden'); 
-  el.activities.innerHTML=''; 
-  loadNextPage(); 
-}
+function reloadAll(){ state.page=1; state.activities=[]; state.reachedEnd=false; el.noMore.classList.add('hidden'); el.activities.innerHTML=''; loadNextPage(); }
 
 function exportActivitiesCSV(activities){
   if(!activities||activities.length===0)return alert('No hay actividades cargadas');
@@ -201,14 +167,6 @@ function downloadCSV(table,filename){
   URL.revokeObjectURL(url);
 }
 
-function init(){
-  reloadAll(); 
-  window.addEventListener('keydown',e=>{ if(e.key==='Escape'){} }); 
-  document.getElementById('logout').addEventListener('click',async()=>{
-    try{ await fetch('./logout',{method:'POST',credentials:'same-origin'}); } 
-    catch(e){}
-    window.location.href='./login.html';
-  });
-}
+function init(){ reloadAll(); window.addEventListener('keydown',e=>{ if(e.key==='Escape'){} }); document.getElementById('logout').addEventListener('click',async()=>{ try{ await fetch('./logout',{method:'POST',credentials:'same-origin'}); } catch(e){} window.location.href='./login.html'; }); }
 
 init();
