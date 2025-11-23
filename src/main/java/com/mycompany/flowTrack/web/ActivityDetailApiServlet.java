@@ -41,7 +41,7 @@ public class ActivityDetailApiServlet extends HttpServlet {
         // TODO: Mover credenciales a archivo de configuración o variables de entorno
         this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
         // TODO: Pon tu token real de Cycling Analytics aquí
-        this.analyticsService = new CyclingAnalyticsService("TU_CYCLING_ANALYTICS_TOKEN_AQUI");
+        this.analyticsService = new CyclingAnalyticsService("5565638");
         
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
