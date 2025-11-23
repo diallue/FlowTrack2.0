@@ -1,12 +1,13 @@
+/* web/ActivityDetailApiServlet.java */
 package com.mycompany.flowTrack.web;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.mycompany.flowTrack.model.Activity;
-// import com.mycompany.flowTrack.model.AnalysisResults; // NO SE USA POR AHORA
+import com.mycompany.flowTrack.model.AnalysisResults; // ¡Importante!
 import com.mycompany.flowTrack.model.User;
-// import com.mycompany.flowTrack.service.CyclingAnalyticsService; // NO SE USA POR AHORA
+import com.mycompany.flowTrack.service.CyclingAnalyticsService; // ¡Importante!
 import com.mycompany.flowTrack.service.StravaService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,16 +23,15 @@ import java.util.Map;
 public class ActivityDetailApiServlet extends HttpServlet {
 
     private StravaService stravaService;
-    // private CyclingAnalyticsService analyticsService; // COMENTADO: Servicio eliminado temporalmente
+    private CyclingAnalyticsService analyticsService; // Servicio reactivado
     private ObjectMapper objectMapper;
 
     @Override
     public void init() throws ServletException {
-        // RECUERDA: Idealmente, mueve estas credenciales a un archivo de configuración
+        // RECUERDA: Mover credenciales a configuración
         this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
-        
-        // COMENTADO: Ya no inicializamos este servicio porque la API no funciona como esperábamos
-        // this.analyticsService = new CyclingAnalyticsService("TU_TOKEN_AQUI"); 
+        // RECUERDA: Usar tu token real de Cycling Analytics
+        this.analyticsService = new CyclingAnalyticsService("TU_CYCLING_ANALYTICS_TOKEN_AQUI"); 
         
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -65,38 +65,36 @@ public class ActivityDetailApiServlet extends HttpServlet {
             long activityId = Long.parseLong(activityIdStr);
             String stravaToken = usuario.getAccessToken();
 
-            // 1. Obtener datos básicos de Strava (Funciona correctamente)
+            // 1. Obtener datos básicos de Strava
             Activity activityStrava = stravaService.getActivity(stravaToken, activityId);
 
-            // 2. Obtener Streams para mapas y gráficas (Funciona correctamente)
-            // Pedimos watts, latlng (mapa), time (eje X gráfica), altitude (perfil)
-            
-            String streamsKeys = "time,latlng,watts,altitude,heartrate,cadence,velocity_smooth";
-            // Usamos key_by_type=true para que sea más fácil de usar en el JS
+            // 2. Obtener Streams (Aseguramos 'cadence')
+            String streamsKeys = "time,latlng,cadence,watts,altitude,heartrate,velocity_smooth";
             String streamsJsonRaw = stravaService.getActivityStreams(stravaToken, activityId, streamsKeys, true);
             Object streamsData = objectMapper.readValue(streamsJsonRaw, Object.class);
 
+            // 3. Obtener Análisis de Cycling Analytics (Reactivado)
+            AnalysisResults analyticsData = null;
+            try {
+                // Subimos la actividad a CA y obtenemos el análisis
+                String analyticsJsonRaw = analyticsService.uploadActivity(activityStrava);
+                analyticsData = objectMapper.readValue(analyticsJsonRaw, AnalysisResults.class);
+            } catch (Exception e) {
+                // Si falla CA, lo logueamos pero no rompemos toda la petición
+                System.err.println("Error al obtener análisis de CA: " + e.getMessage());
+                // analyticsData seguirá siendo null
+            }
 
-            // --- SECCIÓN DE CYCLING ANALYTICS ANULADA ---
-            // Como la API no funciona para JSON, enviamos null en esta sección.
-            // El frontend deberá manejar este caso mostrando un mensaje.
-            Object analyticsData = null; 
-            // ----------------------------------------------
-
-
-            // 3. Combinar todo en un mapa para la respuesta final
+            // 4. Combinar todo en la respuesta
             Map<String, Object> finalResponse = new HashMap<>();
             finalResponse.put("strava_activity", activityStrava);
             finalResponse.put("streams", streamsData);
-            finalResponse.put("analytics", analyticsData); // Será null
+            finalResponse.put("analytics", analyticsData);
 
-            // Enviar el JSON combinado al frontend
             objectMapper.writeValue(response.getWriter(), finalResponse);
 
         } catch (Exception e) {
             e.printStackTrace();
-            // Si es un error de Strava (ej. actividad no encontrada), el código de estado debería reflejarlo,
-            // pero por simplicidad devolvemos 500 con el mensaje.
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"error\": \"Error procesando la actividad: " + e.getMessage() + "\"}");
         }
