@@ -1,27 +1,3 @@
-package com.mycompany.flowTrack.web;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.mycompany.flowTrack.model.Activity;
-import com.mycompany.flowTrack.model.User;
-import com.mycompany.flowTrack.service.StravaService;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-
-/**
- * Servlet que devuelve actividades de Strava aplicando filtros en backend
- */
 @WebServlet("/api/activities") 
 public class ActivitiesDataServlet extends HttpServlet {
 
@@ -30,7 +6,7 @@ public class ActivitiesDataServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
+        this.stravaService = new StravaService("CLIENT_ID", "CLIENT_SECRET");
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
@@ -74,21 +50,30 @@ public class ActivitiesDataServlet extends HttpServlet {
                 before = LocalDate.parse(dateTo).plusDays(1).atStartOfDay(zone).toEpochSecond();
             }
 
-            // Pedir solo la página que corresponde al frontend
-            List<Activity> rawActivities = stravaService.getActivities(usuario.getAccessToken(), perPage, page, before, after);
+            // Obtener actividades filtradas hasta llenar la página solicitada
+            List<Activity> filteredActivities = new java.util.ArrayList<>();
+            int stravaPage = 1;
+            int itemsToSkip = (page - 1) * perPage;
 
-            // Aplicar filtros locales
-            List<Activity> filteredActivities = rawActivities.stream()
-                    .filter(a -> type == null || type.isEmpty() || a.getType().equalsIgnoreCase(type))
-                    .filter(a -> {
-                        if (distMinStr != null && !distMinStr.isEmpty()) {
-                            try { return a.getDistance() != null && a.getDistance() >= Double.parseDouble(distMinStr)*1000; } 
-                            catch(NumberFormatException e){ return true; }
-                        }
-                        return true;
-                    })
-                    .filter(a -> query == null || query.isEmpty() || (a.getName() != null && a.getName().toLowerCase().contains(query.toLowerCase())))
-                    .collect(Collectors.toList());
+            while (filteredActivities.size() < itemsToSkip + perPage) {
+                List<Activity> rawActivities = stravaService.getActivities(usuario.getAccessToken(), perPage, stravaPage, before, after);
+                if (rawActivities.isEmpty()) break;
+
+                List<Activity> currentFiltered = rawActivities.stream()
+                        .filter(a -> type == null || type.isEmpty() || a.getType().equalsIgnoreCase(type))
+                        .filter(a -> {
+                            if (distMinStr != null && !distMinStr.isEmpty()) {
+                                try { return a.getDistance() != null && a.getDistance() >= Double.parseDouble(distMinStr)*1000; } 
+                                catch(NumberFormatException e){ return true; }
+                            }
+                            return true;
+                        })
+                        .filter(a -> query == null || query.isEmpty() || (a.getName() != null && a.getName().toLowerCase().contains(query.toLowerCase())))
+                        .collect(Collectors.toList());
+
+                filteredActivities.addAll(currentFiltered);
+                stravaPage++;
+            }
 
             // Ordenamiento
             if (sort != null && !sort.isEmpty()) {
@@ -102,13 +87,18 @@ public class ActivitiesDataServlet extends HttpServlet {
                     case "elapsed_time_desc":
                         filteredActivities.sort(Comparator.comparing(Activity::getElapsedTime, Comparator.nullsLast(Comparator.reverseOrder())));
                         break;
-                    default: // start_date_local_desc
+                    default:
                         filteredActivities.sort(Comparator.comparing(Activity::getStartDateLocal, Comparator.nullsLast(Comparator.reverseOrder())));
                         break;
                 }
             }
 
-            objectMapper.writeValue(response.getWriter(), filteredActivities);
+            // Sublista según la página
+            int fromIndex = Math.min(itemsToSkip, filteredActivities.size());
+            int toIndex = Math.min(itemsToSkip + perPage, filteredActivities.size());
+            List<Activity> pageActivities = filteredActivities.subList(fromIndex, toIndex);
+
+            objectMapper.writeValue(response.getWriter(), pageActivities);
 
         } catch (Exception e) {
             e.printStackTrace();
