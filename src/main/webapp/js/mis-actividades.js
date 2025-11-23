@@ -11,7 +11,6 @@ const API = {
     if (filters.q) params.set('q', filters.q);
     if (filters.sort) params.set('sort', filters.sort);
 
-    console.log(`Cargando página ${page} con params: ${params.toString()}`); // debug
     return fetch(`./api/activities?${params.toString()}`, { credentials: 'same-origin' })
       .then(checkJson);
   },
@@ -77,12 +76,10 @@ function formatTime(s){ const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), s
 function dateShort(d){ return new Date(d).toLocaleString(); }
 
 function renderActivities(list, append=true){
-  if (!append) el.activities.innerHTML='';
+  if (!append) el.activities.innerHTML=''; // limpiar solo si no es append
   const frag = document.createDocumentFragment();
-  list.forEach(act=>{
-    // Evitar duplicados por ID
-    if(state.activities.some(a => a.id === act.id)) return;
 
+  list.forEach(act=>{
     const cardLink=document.createElement('a');
     cardLink.className='activity-card-link';
     cardLink.href=`actividad.html?id=${act.id}`;
@@ -106,11 +103,12 @@ function renderActivities(list, append=true){
     card.appendChild(meta);
     cardLink.appendChild(card);
     frag.appendChild(cardLink);
-
-    // Añadir a estado
-    state.activities.push(act);
   });
+
   el.activities.appendChild(frag);
+
+  // Añadir a estado solo después de renderizar
+  state.activities.push(...list);
 }
 
 async function loadNextPage(){
