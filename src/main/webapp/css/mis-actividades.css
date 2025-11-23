@@ -43,7 +43,7 @@ body.activities-page{
 .sidebar input, .sidebar select{width:100%; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); background:transparent; color:inherit}
 .sidebar .sidebar-row{display:flex; gap:8px; margin-top:12px}
 .sidebar button{flex:1; padding:10px; border-radius:10px; border:none; cursor:pointer}
-.sidebar button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06)}
+.sidebar button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06); color: #fff}
 .meta{margin-top:10px; color:var(--muted); display:flex; flex-direction:column; gap:6px}
 .sidebar .muted{color:var(--muted)}
 
