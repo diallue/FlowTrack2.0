@@ -61,7 +61,7 @@ public class StravaCallbackServlet extends HttpServlet {
             // 1. URL DE CALLBACK
             // Debe coincidir EXACTAMENTE con la que pusiste en login.js
             // Al usar getRequestURL(), si tu navegador está en /FlowTrack/exchange_token, esto generará la URL correcta.
-            String redirectUri = "http://localhost:8080/FlowTrack/exchange_token";
+            String redirectUri = request.getRequestURL().toString();
             System.out.println("Intentando intercambiar token con URI: " + redirectUri);
             
             // 2. Intercambio de tokens
@@ -69,18 +69,22 @@ public class StravaCallbackServlet extends HttpServlet {
 
             // 3. Procesar datos del atleta
             Athletes stravaAthlete = tokenResponse.getAthlete();
-            User miUsuario = new User(); 
-            miUsuario.setId(stravaAthlete.getId());
-            miUsuario.setFirstname(stravaAthlete.getFirstname());
-            miUsuario.setLastname(stravaAthlete.getLastname());
-            miUsuario.setProfileMedium(stravaAthlete.getProfileMedium());
-            miUsuario.setAccessToken(tokenResponse.getAccessToken());
-            miUsuario.setRefreshToken(tokenResponse.getRefreshToken());
-            miUsuario.setTokenExpiresAt(LocalDateTime.now().plusSeconds(tokenResponse.getExpiresIn()));
+            String accessToken = tokenResponse.getAccessToken();
+            String refreshToken = tokenResponse.getRefreshToken();
+            LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(tokenResponse.getExpiresIn());
+            
+            User usuarioFinal = new User();
+            usuarioFinal.setId(stravaAthlete.getId());
+            usuarioFinal.setFirstname(stravaAthlete.getFirstname());
+            usuarioFinal.setLastname(stravaAthlete.getLastname());
+            usuarioFinal.setProfileMedium(stravaAthlete.getProfileMedium());
+            usuarioFinal.setAccessToken(accessToken);
+            usuarioFinal.setRefreshToken(refreshToken);
+            usuarioFinal.setTokenExpiresAt(expiresAt);
             
             // 4. Guardar en sesión
             HttpSession session = request.getSession(true);
-            session.setAttribute("USUARIO_LOGEADO", miUsuario);
+            session.setAttribute("USUARIO_LOGEADO", usuarioFinal);
 
             // 5. REDIRECCIÓN EXITOSA
             // Importante: Usamos contextPath para que vaya a /FlowTrack/mis-actividades.html
