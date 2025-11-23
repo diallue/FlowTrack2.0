@@ -11,58 +11,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        // 1. Llamar a nuestro Backend API
-        // Si el backend Java falla, lanzará una excepción que capturaremos abajo.
         const response = await fetch(`./api/activity-detail?id=${activityId}`);
         
         if (response.status === 401) {
-            // Sesión caducada
             window.location.href = 'login.html';
             return;
         }
         
         if (!response.ok) {
-             // Intentamos leer el mensaje de error del servidor si existe
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `Error del servidor (${response.status})`);
         }
         
         const data = await response.json();
-        // data tiene la estructura: { strava_activity: {}, analytics: null, streams: {} }
 
-        // Renderizamos las partes. Si falta strava_activity, es un error grave.
         if (!data.strava_activity) throw new Error("Datos de actividad incompletos");
 
         renderHeader(data.strava_activity);
-        
-        // Renderizamos métricas (manejará el caso de analytics null internamente)
+        // Renderizamos métricas con la nueva lógica segura
         renderMetrics(data.analytics, data.strava_activity);
-        
-        // Renderizamos el mapa si hay datos de latlng
         renderMap(data.streams?.latlng);
-        
-        // NUEVO: Renderizamos la gráfica usando los streams crudos de tiempo y watts
         renderPowerChart(data.streams?.time, data.streams?.watts);
 
     } catch (error) {
         console.error("Error en actividad.js:", error);
-        // Mostramos el error en la interfaz de usuario de forma amigable
         document.getElementById('act-title').textContent = "Error cargando actividad";
         document.getElementById('act-meta').innerHTML = `<span style="color:#ff5a5a;">${error.message}</span>`;
         document.getElementById('metrics-container').innerHTML = `<div class="muted">No se pudieron cargar los datos.</div>`;
-        document.querySelector('.visuals-column').style.opacity = '0.5'; // Indicador visual de error
+        document.querySelector('.visuals-column').style.opacity = '0.5';
     }
 });
+
+// --- Funciones Auxiliares ---
+
+// Función segura para formatear números. Si el valor no existe, devuelve null.
+function formatNumber(value, decimals = 0) {
+    if (value === null || value === undefined || isNaN(value)) {
+        return null;
+    }
+    return Number(value).toFixed(decimals);
+}
+
 
 // --- Funciones de Renderizado ---
 
 function renderHeader(stravaData) {
     document.getElementById('act-title').textContent = stravaData.name || "Sin título";
     
+    // La fecha ya debería venir en formato ISO correcto desde el backend
     const date = new Date(stravaData.start_date_local).toLocaleString();
     const dist = (stravaData.distance / 1000).toFixed(2) + ' km';
     
-    // Cálculo de tiempo: si hay moving_time úsalo, si no elapsed_time
     const durationSeconds = stravaData.moving_time || stravaData.elapsed_time || 0;
     const h = Math.floor(durationSeconds / 3600);
     const m = Math.floor((durationSeconds % 3600) / 60);
@@ -77,45 +76,45 @@ function renderHeader(stravaData) {
 
 function renderMetrics(analytics, stravaData) {
     const container = document.getElementById('metrics-container');
-    container.innerHTML = ''; // Limpiar placeholder
+    container.innerHTML = '';
 
-    // --- CAMBIO PRINCIPAL: Si no hay analytics, mostramos un mensaje y datos básicos de Strava ---
     if (!analytics) {
         container.innerHTML = `
             <div class="metric-card" style="grid-column: 1 / -1; text-align: left; background: transparent; border: none;">
-                <p class="muted" style="margin:0;">
-                    Análisis avanzado no disponible actualmente. <br>
-                    Mostrando datos básicos de Strava.
+                <p class="muted" style="margin:0; margin-bottom: 15px;">
+                    Análisis avanzado no disponible. Mostrando datos básicos:
                 </p>
             </div>
         `;
-        // Añadimos métricas básicas que sí tenemos de Strava
-         const basicMetrics = [
-             { label: 'Potencia Media', value: stravaData.average_watts?.toFixed(0), unit: 'W' },
-             { label: 'Potencia Máx.', value: stravaData.max_watts?.toFixed(0), unit: 'W' },
-             { label: 'Velocidad Media', value: (stravaData.average_speed * 3.6).toFixed(1), unit: 'km/h' },
-             { label: 'Cadencia Media', value: stravaData.average_cadence?.toFixed(0), unit: 'rpm' },
-             { label: 'Calorías', value: stravaData.calories?.toFixed(0), unit: 'kcal' }
+        // Usamos la función segura formatNumber
+        // Intentamos leer propiedades en snake_case (lo habitual en JSON)
+        const basicMetrics = [
+             { label: 'Potencia Media', value: formatNumber(stravaData.average_watts), unit: 'W' },
+             { label: 'Potencia Máx.', value: formatNumber(stravaData.max_watts), unit: 'W' },
+             { label: 'Velocidad Media', value: formatNumber(stravaData.average_speed ? stravaData.average_speed * 3.6 : null, 1), unit: 'km/h' },
+             { label: 'Cadencia Media', value: formatNumber(stravaData.average_cadence), unit: 'rpm' },
+             { label: 'Calorías', value: formatNumber(stravaData.calories), unit: 'kcal' }
          ];
          appendMetricsCards(container, basicMetrics);
          return;
     }
 
-    // (Este código solo se ejecutaría si analytics NO fuera null en el futuro)
+    // (Lógica futura para cuando analytics esté disponible)
     const advancedMetrics = [
-        { label: 'Carga (TSS)', value: analytics.load?.toFixed(0), unit: '' },
-        { label: 'Intensidad (IF)', value: analytics.intensity?.toFixed(2), unit: '' },
-        { label: 'Pot. Normalizada', value: analytics.epower?.toFixed(0), unit: 'W' },
-        { label: 'Variabilidad (VI)', value: analytics.variability?.toFixed(2), unit: '' },
-        { label: 'Trabajo', value: analytics.work?.toFixed(0), unit: 'kJ' }
+        { label: 'Carga (TSS)', value: formatNumber(analytics.load), unit: '' },
+        { label: 'Intensidad (IF)', value: formatNumber(analytics.intensity, 2), unit: '' },
+        { label: 'Pot. Normalizada', value: formatNumber(analytics.epower), unit: 'W' },
+        // ...
     ];
     appendMetricsCards(container, advancedMetrics);
 }
 
-// Función auxiliar para añadir tarjetas
+// Función auxiliar mejorada para añadir tarjetas solo si tienen valor
 function appendMetricsCards(container, metricsArray) {
+    let cardsAdded = false;
     metricsArray.forEach(m => {
-        if (m.value != null && !isNaN(m.value) && m.value !== 'NaN') {
+        // Solo creamos la tarjeta si el valor NO es null
+        if (m.value !== null) {
             const card = document.createElement('div');
             card.className = 'metric-card';
             card.innerHTML = `
@@ -124,59 +123,49 @@ function appendMetricsCards(container, metricsArray) {
                 <span class="metric-unit">${m.unit}</span>
             `;
             container.appendChild(card);
+            cardsAdded = true;
         }
     });
+    
+    if (!cardsAdded) {
+         container.innerHTML += '<p class="muted">No hay métricas básicas disponibles para esta actividad.</p>';
+    }
 }
 
 function renderMap(latlngStream) {
     const mapContainer = document.getElementById('map-detail');
-    // Verificamos si el stream existe y tiene datos
     if (!latlngStream || !latlngStream.data || latlngStream.data.length === 0) {
-        mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9aa4ad;">No hay datos GPS disponibles para esta actividad.</div>';
+        mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9aa4ad;">No hay datos GPS disponibles.</div>';
         return;
     }
 
-    // Limpiamos por si hubiera un mapa anterior
     mapContainer.innerHTML = '';
 
     const map = L.map(mapContainer).setView(latlngStream.data[0], 13);
     
-    // Usamos un mapa base oscuro que combina bien con el diseño
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '©OpenStreetMap, ©CartoDB',
         maxZoom: 19,
         subdomains: 'abcd'
     }).addTo(map);
 
-    // Dibujamos la ruta en color acento
     const polyline = L.polyline(latlngStream.data, { color: '#00ff88', weight: 4 }).addTo(map);
-    
-    // Ajustamos la vista a la ruta con un poco de margen (padding)
     map.fitBounds(polyline.getBounds(), { padding: [30, 30] });
-
-    // Invalidamos tamaño para asegurar que se renderiza bien dentro del grid
     setTimeout(() => { map.invalidateSize(); }, 250);
 }
 
-// --- NUEVA FUNCIÓN: Renderiza la gráfica usando streams crudos de Strava ---
 function renderPowerChart(timeStream, wattsStream) {
     const ctx = document.getElementById('power-curve-chart').getContext('2d');
     const chartContainer = ctx.canvas.parentNode;
 
-    // Verificamos que tenemos ambos streams
     if (!timeStream || !timeStream.data || !wattsStream || !wattsStream.data || timeStream.data.length === 0) {
         chartContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9aa4ad;">No hay datos de potencia disponibles.</div>';
         return;
     }
 
-    const timeData = timeStream.data; // Array de segundos [0, 1, 2...]
-    const wattsData = wattsStream.data; // Array de watts [100, 120, 115...]
+    const timeData = timeStream.data;
+    const wattsData = wattsStream.data;
 
-    // Preparamos etiquetas para el eje X (Tiempo)
-    // Para no saturar, Chart.js lo maneja automáticamente, pero le pasamos los segundos.
-    // Opcional: Podrías formatearlos a 'mm:ss' si son muchos puntos, pero los segundos crudos funcionan.
-
-    // Destruir gráfica anterior si existe para evitar superposiciones
     if (window.myPowerChart instanceof Chart) {
         window.myPowerChart.destroy();
     }
@@ -184,40 +173,34 @@ function renderPowerChart(timeStream, wattsStream) {
     window.myPowerChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: timeData, // Eje X: Segundos
+            labels: timeData,
             datasets: [{
                 label: 'Potencia (Watts)',
-                data: wattsData, // Eje Y: Watts
-                borderColor: '#00ff88', // Color de acento
-                backgroundColor: 'rgba(0, 255, 136, 0.1)', // Relleno transparente
+                data: wattsData,
+                borderColor: '#00ff88',
+                backgroundColor: 'rgba(0, 255, 136, 0.1)',
                 borderWidth: 1,
                 fill: true,
-                pointRadius: 0, // Ocultamos los puntos para que parezca una línea fluida
+                pointRadius: 0,
                 pointHoverRadius: 4,
-                tension: 0.2 // Un poco de suavizado
+                tension: 0.2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: { duration: 800 },
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
+            interaction: { mode: 'index', intersect: false },
             scales: {
                 x: {
-                    type: 'linear', // Eje X lineal para tiempo
+                    type: 'linear',
                     grid: { color: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
                     ticks: { 
                         color: '#9aa4ad',
                         maxTicksLimit: 8,
-                        // Callback para formatear los segundos a minutos:segundos si quieres
                         callback: function(value) {
                             const m = Math.floor(value / 60);
-                            // const s = value % 60;
-                            // return `${m}:${s < 10 ? '0'+s : s}`;
-                            return m + ' min'; // Simplificado: muestra minutos
+                            return m + ' min';
                         }
                     },
                     title: { display: true, text: 'Tiempo (min)', color: '#9aa4ad' }

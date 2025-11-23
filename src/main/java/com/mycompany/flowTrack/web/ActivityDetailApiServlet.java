@@ -35,6 +35,7 @@ public class ActivityDetailApiServlet extends HttpServlet {
         
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
                 .findAndRegisterModules();
     }
