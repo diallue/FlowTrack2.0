@@ -76,10 +76,13 @@ function formatTime(s){ const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), s
 function dateShort(d){ return new Date(d).toLocaleString(); }
 
 function renderActivities(list, append=true){
-  if (!append) el.activities.innerHTML=''; // limpiar solo si no es append
+  if (!append) el.activities.innerHTML=''; 
   const frag = document.createDocumentFragment();
 
   list.forEach(act=>{
+    // Evitar duplicados reales
+    if(state.activities.some(a => a.id === act.id)) return;
+
     const cardLink=document.createElement('a');
     cardLink.className='activity-card-link';
     cardLink.href=`actividad.html?id=${act.id}`;
@@ -103,28 +106,30 @@ function renderActivities(list, append=true){
     card.appendChild(meta);
     cardLink.appendChild(card);
     frag.appendChild(cardLink);
+
+    state.activities.push(act); // añadir solo si no está duplicado
   });
 
   el.activities.appendChild(frag);
-
-  // Añadir a estado solo después de renderizar
-  state.activities.push(...list);
 }
 
 async function loadNextPage(){
   if (state.loading || state.reachedEnd) return;
   state.loading=true;
   showLoading(true);
+
   try {
-    const resp = await API.listActivities(state.perPage, state.page, {...state.filters, sort: state.sort});
+    // Guardar la página actual y pedirla
+    const currentPage = state.page;
+    const resp = await API.listActivities(state.perPage, currentPage, {...state.filters, sort: state.sort});
     const activities = Array.isArray(resp) ? resp : (resp.activities||[]);
-    
+
     if (activities.length === 0){
       state.reachedEnd = true;
       el.noMore.classList.remove('hidden');
     } else {
       renderActivities(activities, true);
-      state.page += 1;
+      state.page += 1; // Incrementar solo si hay nuevas actividades
     }
 
     el.totalActivities.textContent=`Actividades (cargadas): ${state.activities.length}`;
