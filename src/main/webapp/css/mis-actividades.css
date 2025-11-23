@@ -350,3 +350,38 @@ body.activities-page {
     font-size: 0.9rem;
   }
 }
+
+/* Estilo para selects en fondo oscuro */
+.sidebar select {
+  background-color: rgba(255, 255, 255, 0.08); /* fondo claro semi-transparente */
+  color: #e6f0ef; /* texto claro */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 36px 10px 12px; /* espacio para la flecha */
+  border-radius: 10px;
+  appearance: none; /* quitar estilo nativo */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23e6f0ef'/%3E%3C/svg%3E"); /* flecha blanca */
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  cursor: pointer;
+  transition: border 0.25s ease, background 0.25s ease;
+}
+
+.sidebar select:focus {
+  border-color: var(--accent);
+  background-color: rgba(0, 255, 136, 0.1);
+  outline: none;
+}
+
+.sidebar select option {
+  background-color: var(--bg); /* fondo de opciones */
+  color: #e6f0ef; /* texto visible */
+}
+
+/* Para Firefox: */
+.sidebar select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #e6f0ef;
+}
