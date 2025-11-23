@@ -108,13 +108,22 @@ function renderActivities(list, append=true){
 
 async function loadNextPage(){
   if (state.loading || state.reachedEnd) return;
-  state.loading=true;
+  state.loading = true;
   showLoading(true);
   try {
     const resp = await API.listActivities(state.perPage, state.page, {...state.filters, sort: state.sort});
     const activities = Array.isArray(resp) ? resp : (resp.activities||[]);
-    if (activities.length===0){ state.reachedEnd=true; el.noMore.classList.remove('hidden'); }
-    else { renderActivities(activities,true); state.activities.push(...activities); state.page+=1; }
+
+    if (activities.length===0){
+      state.reachedEnd = true;
+      el.noMore.classList.remove('hidden');
+    } else {
+      // Evitar duplicados
+      const newActivities = activities.filter(a => !state.activities.some(sa => sa.id === a.id));
+      state.activities.push(...newActivities);
+      renderActivities(newActivities, true); // Solo append de los nuevos
+      state.page += 1;
+    }
 
     el.totalActivities.textContent=`Actividades (cargadas): ${state.activities.length}`;
     el.loadedPage.textContent=`Página: ${state.page-1}`;
@@ -126,7 +135,10 @@ async function loadNextPage(){
   } finally { state.loading=false; showLoading(false); }
 }
 
-function showLoading(v){ if(v){ el.loadingIndicator.classList.remove('hidden'); el.loadMore.disabled=true; } else { el.loadingIndicator.classList.add('hidden'); el.loadMore.disabled=false; } }
+function showLoading(v){ 
+  if(v){ el.loadingIndicator.classList.remove('hidden'); el.loadMore.disabled=true; } 
+  else { el.loadingIndicator.classList.add('hidden'); el.loadMore.disabled=false; } 
+}
 
 function applyFilters(){
   const type=el.filterType.value;
@@ -145,10 +157,17 @@ function clearFilters(){
   reloadAll();
 }
 
-function reloadAll(){ state.page=1; state.activities=[]; state.reachedEnd=false; el.noMore.classList.add('hidden'); el.activities.innerHTML=''; loadNextPage(); }
+function reloadAll(){
+  state.page=1; 
+  state.activities=[];
+  state.reachedEnd=false; 
+  el.noMore.classList.add('hidden'); 
+  el.activities.innerHTML='';
+  loadNextPage();
+}
 
 function exportActivitiesCSV(activities){
-  if(!activities||activities.length===0)return alert('No hay actividades cargadas');
+  if(!activities||activities.length===0) return alert('No hay actividades cargadas');
   const headers=['id','name','type','start_date_local','distance_m','elapsed_time_s','elev_gain_m','avg_speed_m_s'];
   const rows=activities.map(a=>[a.id,a.name,a.type,a.start_date_local,a.distance||'',a.elapsed_time||'',a.total_elevation_gain||'',a.average_speed||'']);
   downloadCSV([headers,...rows],'activities_export.csv');
@@ -167,6 +186,13 @@ function downloadCSV(table,filename){
   URL.revokeObjectURL(url);
 }
 
-function init(){ reloadAll(); window.addEventListener('keydown',e=>{ if(e.key==='Escape'){} }); document.getElementById('logout').addEventListener('click',async()=>{ try{ await fetch('./logout',{method:'POST',credentials:'same-origin'}); } catch(e){} window.location.href='./login.html'; }); }
+function init(){ 
+  reloadAll(); 
+  window.addEventListener('keydown',e=>{ if(e.key==='Escape'){} }); 
+  document.getElementById('logout').addEventListener('click',async()=>{
+    try{ await fetch('./logout',{method:'POST',credentials:'same-origin'}); } catch(e){}
+    window.location.href='./login.html';
+  }); 
+}
 
 init();
