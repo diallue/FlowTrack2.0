@@ -53,10 +53,8 @@ public class ActivitiesDataServlet extends HttpServlet {
         }
 
         try {
-            int page = 1;
-            int perPage = 30;
-            if (request.getParameter("page") != null) page = Integer.parseInt(request.getParameter("page"));
-            if (request.getParameter("per_page") != null) perPage = Integer.parseInt(request.getParameter("per_page"));
+            int page = request.getParameter("page") != null ? Integer.parseInt(request.getParameter("page")) : 1;
+            int perPage = request.getParameter("per_page") != null ? Integer.parseInt(request.getParameter("per_page")) : 30;
 
             String type = request.getParameter("type");           
             String dateFrom = request.getParameter("date_from");  
@@ -76,29 +74,23 @@ public class ActivitiesDataServlet extends HttpServlet {
                 before = LocalDate.parse(dateTo).plusDays(1).atStartOfDay(zone).toEpochSecond();
             }
 
-            // Paginación avanzada: pedimos páginas hasta llenar perPage tras filtrar
-            int stravaPage = 1;
-            List<Activity> filteredActivities = new java.util.ArrayList<>();
-            while (filteredActivities.size() < perPage) {
-                List<Activity> rawActivities = stravaService.getActivities(usuario.getAccessToken(), perPage, stravaPage, before, after);
-                if (rawActivities.isEmpty()) break;
+            // Pedir solo la página que corresponde al frontend
+            List<Activity> rawActivities = stravaService.getActivities(usuario.getAccessToken(), perPage, page, before, after);
 
-                List<Activity> currentFiltered = rawActivities.stream()
-                        .filter(a -> type == null || type.isEmpty() || a.getType().equalsIgnoreCase(type))
-                        .filter(a -> {
-                            if (distMinStr != null && !distMinStr.isEmpty()) {
-                                try { return a.getDistance() != null && a.getDistance() >= Double.parseDouble(distMinStr)*1000; } 
-                                catch(NumberFormatException e){ return true; }
-                            }
-                            return true;
-                        })
-                        .filter(a -> query == null || query.isEmpty() || (a.getName() != null && a.getName().toLowerCase().contains(query.toLowerCase())))
-                        .collect(Collectors.toList());
+            // Aplicar filtros locales
+            List<Activity> filteredActivities = rawActivities.stream()
+                    .filter(a -> type == null || type.isEmpty() || a.getType().equalsIgnoreCase(type))
+                    .filter(a -> {
+                        if (distMinStr != null && !distMinStr.isEmpty()) {
+                            try { return a.getDistance() != null && a.getDistance() >= Double.parseDouble(distMinStr)*1000; } 
+                            catch(NumberFormatException e){ return true; }
+                        }
+                        return true;
+                    })
+                    .filter(a -> query == null || query.isEmpty() || (a.getName() != null && a.getName().toLowerCase().contains(query.toLowerCase())))
+                    .collect(Collectors.toList());
 
-                filteredActivities.addAll(currentFiltered);
-                stravaPage++;
-            }
-
+            // Ordenamiento
             if (sort != null && !sort.isEmpty()) {
                 switch (sort) {
                     case "start_date_local_asc":
@@ -110,14 +102,10 @@ public class ActivitiesDataServlet extends HttpServlet {
                     case "elapsed_time_desc":
                         filteredActivities.sort(Comparator.comparing(Activity::getElapsedTime, Comparator.nullsLast(Comparator.reverseOrder())));
                         break;
-                    default:
+                    default: // start_date_local_desc
+                        filteredActivities.sort(Comparator.comparing(Activity::getStartDateLocal, Comparator.nullsLast(Comparator.reverseOrder())));
                         break;
                 }
-            }
-
-            // Limitar a perPage finales
-            if (filteredActivities.size() > perPage) {
-                filteredActivities = filteredActivities.subList(0, perPage);
             }
 
             objectMapper.writeValue(response.getWriter(), filteredActivities);
