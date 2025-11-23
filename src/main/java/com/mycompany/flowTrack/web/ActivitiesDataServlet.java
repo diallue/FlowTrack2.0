@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.flowTrack.web;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -24,8 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
- * @author diego
+ * Servlet que devuelve actividades de Strava aplicando filtros en backend
  */
 @WebServlet("/api/activities") 
 public class ActivitiesDataServlet extends HttpServlet {
@@ -35,10 +30,7 @@ public class ActivitiesDataServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        // Inicializa el servicio con tus credenciales
         this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
-        
-        // Configuramos Jackson EXACTAMENTE igual que en StravaService
         this.objectMapper = new ObjectMapper();
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
@@ -61,7 +53,6 @@ public class ActivitiesDataServlet extends HttpServlet {
         }
 
         try {
-            // 1. LEER PARÁMETROS DEL FRONTEND
             int page = 1;
             int perPage = 30;
             if (request.getParameter("page") != null) page = Integer.parseInt(request.getParameter("page"));
@@ -74,57 +65,40 @@ public class ActivitiesDataServlet extends HttpServlet {
             String query = request.getParameter("q");             
             String sort = request.getParameter("sort");           
 
-            // 2. CONVERTIR FECHAS A TIMESTAMP (Strava usa Epoch seconds)
             Long after = null;
             Long before = null;
-            
-            // Usamos la zona horaria del sistema por defecto
             ZoneId zone = ZoneId.systemDefault(); 
 
             if (dateFrom != null && !dateFrom.isEmpty()) {
-                // "after" en Strava es exclusivo, así que tomamos el inicio del día
                 after = LocalDate.parse(dateFrom).atStartOfDay(zone).toEpochSecond();
             }
             if (dateTo != null && !dateTo.isEmpty()) {
-                // "before" en Strava es exclusivo, sumamos 1 día para incluir el día seleccionado completo
                 before = LocalDate.parse(dateTo).plusDays(1).atStartOfDay(zone).toEpochSecond();
             }
 
-            // 3. LLAMADA A STRAVA (Filtrando solo por fechas)
-            // Nota: Pedimos 'perPage' items. Si luego filtramos por tipo, podrían quedar menos.
-            // Para una app perfecta habría que pedir más páginas, pero esto es suficiente por ahora.
-            List<Activity> rawActivities = stravaService.getActivities(usuario.getAccessToken(), perPage, page, before, after);
+            // Paginación avanzada: pedimos páginas hasta llenar perPage tras filtrar
+            int stravaPage = 1;
+            List<Activity> filteredActivities = new java.util.ArrayList<>();
+            while (filteredActivities.size() < perPage) {
+                List<Activity> rawActivities = stravaService.getActivities(usuario.getAccessToken(), perPage, stravaPage, before, after);
+                if (rawActivities.isEmpty()) break;
 
-            // 4. FILTRADO EN MEMORIA (Java Stream API)
-            // Filtramos lo que Strava no puede filtrar: Tipo, Distancia mínima, Texto de búsqueda
-            List<Activity> filteredActivities = rawActivities.stream()
-                .filter(a -> {
-                    // Filtro por TIPO
-                    if (type != null && !type.isEmpty()) {
-                        return a.getType().equalsIgnoreCase(type); // Ride, Run...
-                    }
-                    return true;
-                })
-                .filter(a -> {
-                    // Filtro por DISTANCIA MÍNIMA (convertimos km a metros)
-                    if (distMinStr != null && !distMinStr.isEmpty()) {
-                        try {
-                            double minMeters = Double.parseDouble(distMinStr) * 1000;
-                            return a.getDistance() != null && a.getDistance() >= minMeters;
-                        } catch(NumberFormatException e) { return true; }
-                    }
-                    return true;
-                })
-                .filter(a -> {
-                    // Filtro por TEXTO (Nombre)
-                    if (query != null && !query.isEmpty()) {
-                        return a.getName() != null && a.getName().toLowerCase().contains(query.toLowerCase());
-                    }
-                    return true;
-                })
-                .collect(Collectors.toList());
+                List<Activity> currentFiltered = rawActivities.stream()
+                        .filter(a -> type == null || type.isEmpty() || a.getType().equalsIgnoreCase(type))
+                        .filter(a -> {
+                            if (distMinStr != null && !distMinStr.isEmpty()) {
+                                try { return a.getDistance() != null && a.getDistance() >= Double.parseDouble(distMinStr)*1000; } 
+                                catch(NumberFormatException e){ return true; }
+                            }
+                            return true;
+                        })
+                        .filter(a -> query == null || query.isEmpty() || (a.getName() != null && a.getName().toLowerCase().contains(query.toLowerCase())))
+                        .collect(Collectors.toList());
 
-            // 5. ORDENACIÓN (SORTING)
+                filteredActivities.addAll(currentFiltered);
+                stravaPage++;
+            }
+
             if (sort != null && !sort.isEmpty()) {
                 switch (sort) {
                     case "start_date_local_asc":
@@ -136,14 +110,16 @@ public class ActivitiesDataServlet extends HttpServlet {
                     case "elapsed_time_desc":
                         filteredActivities.sort(Comparator.comparing(Activity::getElapsedTime, Comparator.nullsLast(Comparator.reverseOrder())));
                         break;
-                    // 'start_date_local_desc' es el defecto de Strava, no hace falta ordenar
-                    default: 
-                         // Strava ya devuelve orden descendente por fecha, no tocamos nada
+                    default:
                         break;
                 }
             }
 
-            // 6. ENVIAR RESULTADO
+            // Limitar a perPage finales
+            if (filteredActivities.size() > perPage) {
+                filteredActivities = filteredActivities.subList(0, perPage);
+            }
+
             objectMapper.writeValue(response.getWriter(), filteredActivities);
 
         } catch (Exception e) {
