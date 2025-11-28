@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.flowTrack.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,15 +12,29 @@ import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 
 /**
+ * Servicio para interactuar con la API de Cycling Analytics.
  *
- * @author diego
+ * Permite subir actividades deportivas obtenidas de Strava y obtener un
+ * registro analítico en Cycling Analytics.
  */
 public class CyclingAnalyticsService {
+    /** URL base del endpoint de Cycling Analytics para subir rides. */
     private static final String API_URL = "https://www.cyclinganalytics.com/api/json_ride";
-    private final String apiToken; // Token de Cycling Analytics (NO el de Strava)
+
+    /** Token de autorización de Cycling Analytics (NO el de Strava). */
+    private final String apiToken;
+
+    /** Cliente HTTP reutilizable para las peticiones. */
     private final HttpClient httpClient;
+
+    /** Mapeador JSON para construir y parsear objetos JSON. */
     private final ObjectMapper objectMapper;
 
+    /**
+     * Constructor.
+     *
+     * @param apiToken Token de acceso a Cycling Analytics.
+     */
     public CyclingAnalyticsService(String apiToken) {
         this.apiToken = apiToken;
         this.httpClient = HttpClient.newBuilder()
@@ -35,52 +45,48 @@ public class CyclingAnalyticsService {
     }
 
     /**
-     * Envía una actividad de Strava a Cycling Analytics.
-     * @param activity El objeto Activity obtenido de Strava.
-     * @return La respuesta JSON de Cycling Analytics (contiene el ID de la nueva actividad y datos básicos).
+     * Sube una actividad de Strava a Cycling Analytics.
+     *
+     * Construye el JSON requerido por la API y realiza una petición HTTP POST.
+     *
+     * @param activity Actividad obtenida de Strava.
+     * @return JSON devuelto por Cycling Analytics con el ID de la nueva actividad y métricas.
+     * @throws IOException Si ocurre un error en la petición HTTP.
+     * @throws InterruptedException Si la petición HTTP es interrumpida.
      */
     public String uploadActivity(Activity activity) throws IOException, InterruptedException {
         
         // 1. Construir el JSON específico que pide Cycling Analytics
-        // Usamos ObjectNode para construir el JSON manualmente y asegurar los nombres de campos correctos
         ObjectNode jsonBody = objectMapper.createObjectNode();
 
         // -- Campos Obligatorios / Importantes --
-        
-        // Fecha de inicio (Formato ISO)
         if (activity.getStartDate() != null) {
             jsonBody.put("start_time", activity.getStartDate().format(DateTimeFormatter.ISO_INSTANT));
         }
         
-        // Zona horaria
         if (activity.getTimezone() != null) {
             jsonBody.put("timezone", activity.getTimezone());
         }
 
-        // Tiempos (En segundos)
-        // 'duration' es el tiempo total transcurrido
         if (activity.getElapsedTime() != null) {
             jsonBody.put("duration", activity.getElapsedTime());
         }
-        // 'time' es el tiempo en movimiento (moving time)
+
         if (activity.getMovingTime() != null) {
             jsonBody.put("time", activity.getMovingTime());
         }
 
-        // Distancia (Cycling Analytics suele esperar Km, pero acepta metros si no se especifica unidad, 
-        // aunque es mejor convertir a KM si tu lógica anterior lo hacía).
         if (activity.getDistance() != null) {
-            jsonBody.put("distance", activity.getDistance() / 1000.0); // Convertimos Metros a KM
+            jsonBody.put("distance", activity.getDistance() / 1000.0);
         }
 
-        // Elevación (Metros)
         if (activity.getTotalElevationGain() != null) {
             jsonBody.put("elevation_gain", activity.getTotalElevationGain());
         }
 
         // -- Metadatos --
         if (activity.getName() != null) {
-            jsonBody.put("description", activity.getName()); // El título
+            jsonBody.put("description", activity.getName());
         }
         
         if (activity.getDescription() != null) {
@@ -93,7 +99,6 @@ public class CyclingAnalyticsService {
 
         // -- Datos de Rendimiento (Resumen) --
         if (activity.getAverageSpeed() != null) {
-            // Strava da m/s, pasamos a km/h
             jsonBody.put("average_speed", activity.getAverageSpeed() * 3.6);
         }
         
@@ -113,7 +118,6 @@ public class CyclingAnalyticsService {
             jsonBody.put("temperature", activity.getAverageTemp());
         }
 
-        // Convertir el objeto JSON a String
         String requestBody = objectMapper.writeValueAsString(jsonBody);
 
         // 2. Crear la petición HTTP POST
@@ -128,14 +132,17 @@ public class CyclingAnalyticsService {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            return response.body(); // Devuelve el JSON de éxito
+            return response.body();
         } else {
             throw new IOException("Error al subir a Cycling Analytics: " + response.statusCode() + " - " + response.body());
         }
     }
 
     /**
-     * Mapeo simple de tipos de deporte de Strava a Cycling Analytics.
+     * Mapea tipos de deporte de Strava a los tipos usados por Cycling Analytics.
+     *
+     * @param stravaType Tipo de actividad de Strava
+     * @return Tipo equivalente en Cycling Analytics
      */
     private String mapStravaTypeToCyclingAnalytics(String stravaType) {
         if (stravaType == null) return "ride";
@@ -144,7 +151,7 @@ public class CyclingAnalyticsService {
             case "run": return "run";
             case "swim": return "swim";
             case "virtualride": return "virtual_ride";
-            case "mountainbikeride": return "mtb_ride"; // Ejemplo hipotético, verificar API de CA
+            case "mountainbikeride": return "mtb_ride"; 
             default: return "ride";
         }
     }
