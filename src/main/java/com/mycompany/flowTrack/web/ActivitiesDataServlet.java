@@ -105,7 +105,7 @@ public class ActivitiesDataServlet extends HttpServlet {
             }
 
             // Ordenamiento
-            if (sort != null && !sort.isEmpty()) {
+            /*if (sort != null && !sort.isEmpty()) {
                 switch (sort) {
                     case "start_date_local_asc":
                         filteredActivities.sort(Comparator.comparing(Activity::getStartDateLocal));
@@ -120,7 +120,7 @@ public class ActivitiesDataServlet extends HttpServlet {
                         filteredActivities.sort(Comparator.comparing(Activity::getStartDateLocal, Comparator.nullsLast(Comparator.reverseOrder())));
                         break;
                 }
-            }
+            }*/
 
             // Sublista según la página
             int fromIndex = Math.min(itemsToSkip, filteredActivities.size());

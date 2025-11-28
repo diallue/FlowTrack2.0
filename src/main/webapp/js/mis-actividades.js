@@ -54,7 +54,6 @@ const el = {
   filterDistance: document.getElementById('filter-distance-min'),
   filterSearch: document.getElementById('filter-search'),
   exportCsv: document.getElementById('export-csv'),
-  sortBy: document.getElementById('sort-by'),
   refreshBtn: document.getElementById('refresh-all')
 };
 
@@ -62,7 +61,6 @@ el.loadMore.addEventListener('click', () => loadNextPage());
 el.applyFilters.addEventListener('click', () => applyFilters());
 el.clearFilters.addEventListener('click', () => clearFilters());
 el.exportCsv.addEventListener('click', () => exportActivitiesCSV(state.activities));
-el.sortBy.addEventListener('change', (e)=>{ state.sort = e.target.value; reloadAll(); });
 el.refreshBtn.addEventListener('click', ()=> reloadAll());
 
 let searchTimeout = null;
