@@ -68,21 +68,25 @@ public class ActivityDetailApiServlet extends HttpServlet {
             // 1. Obtener datos básicos de Strava
             Activity activityStrava = stravaService.getActivity(stravaToken, activityId);
 
-            // 2. Obtener Streams (Aseguramos 'cadence')
-            String streamsKeys = "time,latlng,cadence,watts,altitude,heartrate,velocity_smooth";
+            // 2. Obtener Streams (Raw JSON String para pasarlo al conversor)
+            String streamsKeys = "time,latlng,cadence,watts,heartrate,velocity_smooth";
+            // IMPORTANTE: Guardamos el JSON crudo en un String
             String streamsJsonRaw = stravaService.getActivityStreams(stravaToken, activityId, streamsKeys, true);
+            
+            // Lo convertimos a objeto para enviarlo al frontend luego
             Object streamsData = objectMapper.readValue(streamsJsonRaw, Object.class);
 
-            // 3. Obtener Análisis de Cycling Analytics (Reactivado)
+            // 3. Obtener Análisis de Cycling Analytics (AHORA SUBIENDO EL CSV)
             AnalysisResults analyticsData = null;
             try {
-                // Subimos la actividad a CA y obtenemos el análisis
-                String analyticsJsonRaw = analyticsService.uploadActivity(activityStrava);
+                // Pasamos la actividad Y el JSON de los streams para generar el CSV
+                String analyticsJsonRaw = analyticsService.uploadActivity(activityStrava, streamsJsonRaw);
+                
+                // Mapeamos la respuesta
                 analyticsData = objectMapper.readValue(analyticsJsonRaw, AnalysisResults.class);
             } catch (Exception e) {
-                // Si falla CA, lo logueamos pero no rompemos toda la petición
-                System.err.println("Error al obtener análisis de CA: " + e.getMessage());
-                // analyticsData seguirá siendo null
+                System.err.println("CA Upload Failed: " + e.getMessage());
+                // No lanzamos error para que la página cargue al menos los datos de Strava
             }
 
             // 4. Combinar todo en la respuesta

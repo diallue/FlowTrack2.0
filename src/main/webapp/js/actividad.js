@@ -1,4 +1,4 @@
-// webapp/js/actividad.js - VERSIÓN FINAL COMPLETA Y CORREGIDA
+// webapp/js/actividad.js
 
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
@@ -12,39 +12,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch(`./api/activity-detail?id=${activityId}`);
         if (response.status === 401) { window.location.href = 'login.html'; return; }
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Error del servidor (${response.status})`);
-        }
+        if (!response.ok) throw new Error(`Error del servidor (${response.status})`);
         
         const data = await response.json(); // { strava_activity, analytics, streams }
-        if (!data.strava_activity) throw new Error("Datos de actividad incompletos");
-
-        // Renderizamos la cabecera (título, fecha, etc.)
-        renderHeader(data.strava_activity);
         
-        // Renderizamos las métricas (avanzadas o básicas)
+        if (!data.strava_activity) throw new Error("Datos incompletos");
+
+        // 1. Cabecera y Métricas Ampliadas
+        renderHeader(data.strava_activity);
         renderMetrics(data.analytics, data.strava_activity);
         
-        // Extraemos datos de streams de forma segura
-        const latlngData = extractStreamData(data.streams?.latlng);
-        const timeData = extractStreamData(data.streams?.time);
-        const cadenceData = extractStreamData(data.streams?.cadence);
+        // 2. Extraer Streams
+        const streams = data.streams || {};
+        const timeData = extractStreamData(streams.time);
+        const latlngData = extractStreamData(streams.latlng);
+        
+        // Datos para gráficas
+        const altData = extractStreamData(streams.altitude);
+        const speedData = extractStreamData(streams.velocity_smooth);
+        const hrData = extractStreamData(streams.heartrate);
+        const cadData = extractStreamData(streams.cadence);
 
-        // Renderizamos el mapa
+        // 3. Renderizar Mapa y Gráficos (Sin Potencia)
         renderMap(latlngData);
-        // Renderizamos la gráfica de cadencia
-        renderCadenceChart(timeData, cadenceData);
+
+        // Eje X (Tiempo)
+        const xAxis = timeData;
+
+        renderChart('chart-elevation', xAxis, altData, 'Elevación (m)', '#8884d8', true);
+        
+        // Velocidad (convertir m/s a km/h)
+        renderChart('chart-speed', xAxis, speedData ? speedData.map(v => v * 3.6) : null, 'Velocidad (km/h)', '#00C49F');
+        
+        // Frecuencia Cardíaca
+        renderChart('chart-hr', xAxis, hrData, 'Frecuencia Cardíaca (bpm)', '#FF5A5A');
+        
+        // Cadencia
+        renderChart('chart-cadence', xAxis, cadData, 'Cadencia (rpm)', '#00d2ff');
+
+        // 4. Análisis de Zonas (Solo si hay pulso)
+        if (hrData && hrData.length > 0) {
+            renderZonesChart(hrData);
+        } else {
+            // Ocultar panel de zonas si no hay datos de pulso
+            const zonePanel = document.querySelector('.zones-panel');
+            if(zonePanel) zonePanel.style.display = 'none';
+        }
 
     } catch (error) {
-        console.error("Error crítico:", error);
+        console.error("Error:", error);
         showErrorState(error.message);
     }
 });
 
 // --- Funciones Auxiliares ---
 
-// Extrae el array de datos de un stream, venga como venga (directo o dentro de un objeto .data)
 function extractStreamData(streamObj) {
     if (!streamObj) return null;
     if (Array.isArray(streamObj)) return streamObj;
@@ -52,169 +74,211 @@ function extractStreamData(streamObj) {
     return null;
 }
 
-// Formatea números con decimales opcionales
 function formatNumber(value, decimals = 0) {
-    if (value === null || value === undefined || isNaN(value)) return null;
-    return Number(value).toFixed(decimals);
+    return (value !== null && value !== undefined && !isNaN(value)) ? Number(value).toFixed(decimals) : '—';
 }
 
-// Formatea segundos a horas:minutos
 function formatTime(seconds) {
-    if (!seconds) return null;
+    if (!seconds) return '—';
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     return `${h > 0 ? h + 'h ' : ''}${m}m`;
 }
 
-// Muestra estado de error en la interfaz
 function showErrorState(message) {
-    document.getElementById('act-title').textContent = "Error cargando actividad";
+    document.getElementById('act-title').textContent = "Error";
     document.getElementById('act-meta').innerHTML = `<span style="color:#ff5a5a;">${message}</span>`;
-    document.getElementById('metrics-container').innerHTML = `<div class="muted">No se pudieron cargar los datos.</div>`;
-    document.querySelector('.visuals-column').style.opacity = '0.5';
 }
 
-
-// --- Funciones de Renderizado (AHORA SÍ ESTÁN COMPLETAS) ---
+// --- Renderizado ---
 
 function renderHeader(stravaData) {
-    document.getElementById('act-title').textContent = stravaData.name || "Sin título";
+    document.getElementById('act-title').textContent = stravaData.name || "Actividad sin título";
+    const date = new Date(stravaData.start_date_local).toLocaleDateString();
+    // Icono según tipo de deporte
+    let icon = '🚴';
+    if (stravaData.type === 'Run') icon = '🏃';
+    if (stravaData.type === 'Swim') icon = '🏊';
     
-    const date = new Date(stravaData.start_date_local).toLocaleString();
-    const dist = (stravaData.distance / 1000).toFixed(2) + ' km';
-    const timeStr = formatTime(stravaData.moving_time || stravaData.elapsed_time);
-    const elev = stravaData.total_elevation_gain ? `${stravaData.total_elevation_gain} m` : '—';
-
-    document.getElementById('act-meta').innerHTML = `
-        <span>📅 ${date}</span> • <span>📏 ${dist}</span> • <span>⏱️ ${timeStr}</span> • <span>⛰️ ${elev}</span>
-    `;
+    document.getElementById('act-meta').innerHTML = `${icon} ${stravaData.type} • 📅 ${date} • 📏 ${(stravaData.distance/1000).toFixed(2)} km • ⏱️ ${formatTime(stravaData.moving_time)}`;
 }
 
 function renderMetrics(analytics, stravaData) {
     const container = document.getElementById('metrics-container');
     container.innerHTML = '';
+    
+    // Lista completa de métricas para mostrar
+    // Priorizamos TRIMP y HR Load de Cycling Analytics si no hay potencia
+    const metrics = [
+        // 1. Esfuerzo y Carga (Cycling Analytics)
+        { l: 'Carga (TRIMP)', v: analytics?.trimp || analytics?.load, u: '', highlight: true }, 
+        { l: 'Intensidad', v: analytics?.intensity ? formatNumber(analytics.intensity, 2) : null, u: '' },
+        
+        // 2. Datos Cardíacos (Strava)
+        { l: 'Pulso Medio', v: stravaData.average_heartrate, u: 'bpm' },
+        { l: 'Pulso Máx', v: stravaData.max_heartrate, u: 'bpm' },
+        
+        // 3. Velocidad y Ritmo
+        { l: 'Vel. Media', v: stravaData.average_speed ? (stravaData.average_speed*3.6).toFixed(1) : null, u: 'km/h' },
+        { l: 'Vel. Máxima', v: stravaData.max_speed ? (stravaData.max_speed*3.6).toFixed(1) : null, u: 'km/h' },
+        
+        // 4. Cadencia
+        { l: 'Cadencia Med.', v: stravaData.average_cadence, u: 'rpm' },
+        
+        // 5. Energía y Entorno
+        { l: 'Calorías', v: stravaData.calories, u: 'kcal' },
+        { l: 'Desnivel +', v: stravaData.total_elevation_gain, u: 'm' },
+        { l: 'Temp. Media', v: stravaData.average_temp, u: '°C' },
+        
+        // 6. Otros
+        { l: 'Dispositivo', v: stravaData.device_name, u: '', small: true }
+    ];
 
-    let metrics = [];
-    let title = 'Métricas';
-
-    // Si hay análisis avanzado con datos válidos (ej. tiene carga calculada), lo usamos
-    if (analytics && typeof analytics.load === 'number') {
-        title = 'Análisis Avanzado (Cycling Analytics)';
-        metrics = [
-            { label: 'Carga (TSS)', value: formatNumber(analytics.load), unit: '' },
-            { label: 'Intensidad (IF)', value: formatNumber(analytics.intensity, 2), unit: '' },
-            { label: 'Variabilidad (VI)', value: formatNumber(analytics.variability, 2), unit: '' },
-            { label: 'Pot. Normalizada', value: formatNumber(analytics.epower), unit: 'W' },
-            { label: 'Trabajo', value: formatNumber(analytics.work), unit: 'kJ' }
-        ];
-    } else {
-        // Si no, mostramos más métricas básicas de Strava
-        title = 'Métricas Básicas (Strava)';
-        metrics = [
-             { label: 'Velocidad Media', value: formatNumber(stravaData.average_speed ? stravaData.average_speed * 3.6 : null, 1), unit: 'km/h' },
-             { label: 'Velocidad Máx.', value: formatNumber(stravaData.max_speed ? stravaData.max_speed * 3.6 : null, 1), unit: 'km/h' },
-             { label: 'Cadencia Media', value: formatNumber(stravaData.average_cadence), unit: 'rpm' },
-             { label: 'Potencia Media', value: formatNumber(stravaData.average_watts), unit: 'W' },
-             { label: 'Desnivel +', value: formatNumber(stravaData.total_elevation_gain), unit: 'm' },
-             { label: 'Tiempo Mov.', value: formatTime(stravaData.moving_time), unit: '' },
-             { label: 'Calorías', value: formatNumber(stravaData.calories), unit: 'kcal' }
-         ];
-    }
-
-    // Actualizamos el título de la sección
-    const metricsTitle = document.querySelector('.metrics-panel h2');
-    if (metricsTitle) metricsTitle.textContent = title;
-
-    appendMetricsCards(container, metrics);
-}
-
-function appendMetricsCards(container, metricsArray) {
-    let cardsAdded = false;
-    metricsArray.forEach(m => {
-        if (m.value !== null) {
-            const card = document.createElement('div');
-            card.className = 'metric-card';
-            card.innerHTML = `<span class="metric-label">${m.label}</span><span class="metric-value">${m.value}</span><span class="metric-unit">${m.unit}</span>`;
-            container.appendChild(card);
-            cardsAdded = true;
+    metrics.forEach(m => {
+        // Solo mostramos si el valor existe (no es null ni undefined)
+        if (m.v !== null && m.v !== undefined && m.v !== '—') {
+            const styleClass = m.highlight ? 'metric-value highlight' : 'metric-value';
+            const smallClass = m.small ? 'metric-card small-text' : 'metric-card';
+            
+            container.innerHTML += `
+                <div class="${smallClass}">
+                    <span class="metric-label">${m.l}</span>
+                    <span class="${styleClass}">${m.v}</span>
+                    <span class="metric-unit">${m.u}</span>
+                </div>`;
         }
     });
-    if (!cardsAdded) container.innerHTML += '<p class="muted">No hay métricas disponibles.</p>';
 }
 
-function renderMap(latlngData) {
-    const mapContainer = document.getElementById('map-detail');
-    if (!latlngData || latlngData.length === 0) {
-        mapContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9aa4ad;">No hay datos GPS disponibles.</div>';
-        return;
-    }
-
-    mapContainer.innerHTML = '';
-
-    const map = L.map(mapContainer).setView(latlngData[0], 13);
+function renderMap(latlngs) {
+    const el = document.getElementById('map-detail');
+    if (!latlngs || latlngs.length === 0) { el.innerHTML = "<p style='text-align:center;padding:20px;color:#666'>Sin datos GPS</p>"; return; }
     
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '©OpenStreetMap, ©CartoDB', maxZoom: 19, subdomains: 'abcd'
+    // Limpiamos mapa previo si existe (importante en SPAs, aunque aquí recargamos página)
+    if (el._leaflet_id) { el.innerHTML = ''; }
+
+    const map = L.map(el).setView(latlngs[0], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+        attribution: '©OpenStreetMap',
+        maxZoom: 19
     }).addTo(map);
+    
+    const poly = L.polyline(latlngs, { color: '#00ff88', weight: 4, opacity: 0.8 }).addTo(map);
+    
+    // Marcadores inicio/fin
+    L.circleMarker(latlngs[0], {color: '#00ff88', radius: 5, fillOpacity:1}).addTo(map).bindPopup("Inicio");
+    L.circleMarker(latlngs[latlngs.length-1], {color: '#ff5a5a', radius: 5, fillOpacity:1}).addTo(map).bindPopup("Fin");
 
-    const polyline = L.polyline(latlngData, { color: '#00ff88', weight: 4 }).addTo(map);
-    map.fitBounds(polyline.getBounds(), { padding: [30, 30] });
-
-    setTimeout(() => { map.invalidateSize(); }, 250);
+    map.fitBounds(poly.getBounds(), { padding: [30, 30] });
 }
 
-function renderCadenceChart(timeData, cadenceData) {
-    const ctx = document.getElementById('power-curve-chart').getContext('2d');
-    const chartContainer = ctx.canvas.parentNode;
-
-    if (!timeData || timeData.length === 0 || !cadenceData || cadenceData.length === 0) {
-        chartContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9aa4ad;">No hay datos de cadencia disponibles.</div>';
+function renderChart(canvasId, labels, data, label, color, fill = false) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return; // Si quitaste el canvas del HTML
+    
+    if (!data || data.length === 0) {
+        // Ocultamos el panel entero si no hay datos para esa gráfica
+        const panel = canvas.closest('.chart-panel');
+        if(panel) panel.style.display = 'none';
         return;
     }
 
-    if (window.myChart instanceof Chart) window.myChart.destroy();
-
-    window.myChart = new Chart(ctx, {
+    new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: {
-            labels: timeData,
+            labels: labels, 
             datasets: [{
-                label: 'Cadencia (rpm)',
-                data: cadenceData,
-                borderColor: '#00d2ff', // Color cian para cadencia
-                backgroundColor: 'rgba(0, 210, 255, 0.1)',
-                borderWidth: 1,
-                fill: true,
-                pointRadius: 0, pointHoverRadius: 4, tension: 0.2
+                label: label,
+                data: data,
+                borderColor: color,
+                backgroundColor: color + '20', // 20 = Transparencia hex
+                borderWidth: 2,
+                pointRadius: 0, // Sin puntos para mejor rendimiento
+                pointHoverRadius: 4,
+                fill: fill,
+                tension: 0.2 // Curva suave
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false, animation: { duration: 800 },
-            interaction: { mode: 'index', intersect: false },
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: { 
+                    mode: 'index', 
+                    intersect: false,
+                    backgroundColor: 'rgba(15, 23, 36, 0.9)',
+                    titleColor: color,
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1
+                } 
+            },
             scales: {
-                x: {
-                    type: 'linear',
-                    grid: { color: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
-                    ticks: { 
-                        color: '#9aa4ad', maxTicksLimit: 8,
-                        callback: function(value) { const m = Math.floor(value / 60); return m + ' min'; }
-                    },
-                    title: { display: true, text: 'Tiempo (min)', color: '#9aa4ad' }
-                },
-                y: {
-                    grid: { color: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
-                    ticks: { color: '#9aa4ad', maxTicksLimit: 6 },
-                    title: { display: true, text: 'rpm', color: '#9aa4ad' },
-                    beginAtZero: true
+                x: { display: false }, 
+                y: { 
+                    grid: { color: 'rgba(255,255,255,0.05)' }, 
+                    ticks: { color: '#888', font: {size: 10} } 
                 }
             },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#0f1724', titleColor: '#00d2ff', bodyColor: '#fff', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
-                    callbacks: {
-                        title: (context) => { const sec = context[0].parsed.x; const m = Math.floor(sec / 60); const s = sec % 60; return `Tiempo: ${m}m ${s}s`; }
-                    }
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+        }
+    });
+}
+
+function renderZonesChart(hrData) {
+    // Calculamos zonas básicas (estimación estándar)
+    // Z1: <125, Z2: 125-145, Z3: 145-165, Z4: 165-180, Z5: >180
+    // Idealmente estas zonas deberían venir del perfil del usuario
+    const zones = [0, 0, 0, 0, 0];
+    let totalPoints = 0;
+    
+    hrData.forEach(bpm => {
+        if(bpm > 0) { // Ignorar ceros
+            totalPoints++;
+            if (bpm < 125) zones[0]++;
+            else if (bpm < 145) zones[1]++;
+            else if (bpm < 165) zones[2]++;
+            else if (bpm < 180) zones[3]++;
+            else zones[4]++;
+        }
+    });
+
+    if (totalPoints === 0) return;
+
+    const percentages = zones.map(count => ((count / totalPoints) * 100).toFixed(1));
+
+    new Chart(document.getElementById('zones-chart'), {
+        type: 'bar',
+        data: {
+            labels: ['Z1 Recup', 'Z2 Fondo', 'Z3 Tempo', 'Z4 Umbral', 'Z5 Anaer'],
+            datasets: [{
+                data: percentages,
+                backgroundColor: [
+                    '#A0A0A0', // Gris
+                    '#3498db', // Azul
+                    '#2ecc71', // Verde
+                    '#f1c40f', // Amarillo
+                    '#e74c3c'  // Rojo
+                ],
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                    callbacks: { label: (c) => `${c.raw}% del tiempo` } 
+                } 
+            },
+            scales: {
+                y: { display: false, grid: {display: false} },
+                x: { 
+                    ticks: { color: '#ccc', font: { size: 11 } }, 
+                    grid: { display: false } 
                 }
             }
         }

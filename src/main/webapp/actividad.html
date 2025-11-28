@@ -25,30 +25,63 @@
       
     <section class="detail-header card-panel">
         <h1 id="act-title">Cargando...</h1>
-        <div class="detail-meta" id="act-meta">
-            </div>
+        <div class="detail-meta" id="act-meta"></div>
     </section>
 
     <div class="detail-grid">
         
-        <section class="metrics-panel card-panel">
-            <h2>Rendimiento (Cycling Analytics)</h2>
-            <div class="metrics-grid" id="metrics-container">
-                <div class="loading-placeholder">Cargando análisis...</div>
-            </div>
-        </section>
+        <div class="info-column">
+            
+            <section class="metrics-panel card-panel">
+                <h2>Estadísticas y Rendimiento</h2>
+                <div class="metrics-grid" id="metrics-container">
+                    <div class="loading-placeholder">Calculando métricas...</div>
+                </div>
+            </section>
 
-        <div class="visuals-column">
             <section class="map-panel card-panel">
                 <div id="map-detail" class="map-container"></div>
             </section>
+
+            <section class="zones-panel card-panel">
+                <h2>Zonas Frecuencia Cardíaca</h2>
+                <div class="chart-container-wrapper" style="height: 200px;">
+                    <canvas id="zones-chart"></canvas>
+                </div>
+                <div id="zones-legend" class="zones-legend"></div>
+            </section>
+        </div>
+
+        <div class="charts-column">
             
             <section class="chart-panel card-panel">
-                <h2>Gráfico de Cadencia (rpm)</h2>
+                <h3>Perfil de Elevación</h3>
                 <div class="chart-container-wrapper">
-                    <canvas id="power-curve-chart"></canvas>
+                    <canvas id="chart-elevation"></canvas>
                 </div>
             </section>
+            
+            <section class="chart-panel card-panel">
+                <h3>Velocidad (km/h)</h3>
+                <div class="chart-container-wrapper">
+                    <canvas id="chart-speed"></canvas>
+                </div>
+            </section>
+
+            <section class="chart-panel card-panel">
+                <h3>Frecuencia Cardíaca (bpm)</h3>
+                <div class="chart-container-wrapper">
+                    <canvas id="chart-hr"></canvas>
+                </div>
+            </section>
+
+            <section class="chart-panel card-panel">
+                <h3>Cadencia (rpm)</h3>
+                <div class="chart-container-wrapper">
+                    <canvas id="chart-cadence"></canvas>
+                </div>
+            </section>
+
         </div>
     </div>
   </main>

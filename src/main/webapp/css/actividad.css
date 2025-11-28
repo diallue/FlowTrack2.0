@@ -1,8 +1,9 @@
 /* webapp/css/actividad.css */
 
+/* --- Estructura Principal --- */
 .detail-view .main-detail {
     padding: 20px;
-    max-width: 1400px;
+    max-width: 1600px; /* Un poco más ancho para ver bien las gráficas */
     margin: 0 auto;
     width: 100%;
     display: flex;
@@ -10,104 +11,178 @@
     gap: 20px;
 }
 
-/* Clase utilitaria para paneles tipo tarjeta */
+/* --- Paneles (Tarjetas) --- */
 .card-panel {
-    background: var(--panel);
+    background: var(--panel); /* Usa la variable de mis-actividades.css */
     border: 1px solid rgba(255,255,255,0.05);
     border-radius: 12px;
     padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
-/* Encabezado */
-.detail-header h1 {
-    margin: 0 0 10px 0;
-    color: var(--accent);
+/* --- Encabezado --- */
+.detail-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
+
+.detail-header h1 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 1.8rem;
+}
+
 .detail-meta {
     color: var(--muted);
     display: flex;
-    gap: 15px;
-    font-size: 0.9rem;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 1rem;
+    align-items: center;
 }
+
+.detail-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .btn-ghost {
-    padding: 8px 12px;
-    border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 8px;
     color: var(--muted);
     text-decoration: none;
+    font-size: 0.9rem;
     transition: all 0.2s;
 }
 .btn-ghost:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.1);
     color: #fff;
+    border-color: #fff;
 }
 
-/* Grid Principal (2 columnas en escritorio) */
+/* --- Grid de Contenido (Izquierda Fija / Derecha Flexible) --- */
 .detail-grid {
     display: grid;
-    grid-template-columns: 1fr 1.5fr; /* Izquierda más estrecha, derecha más ancha */
+    /* Columna izquierda fija de 380px, derecha ocupa el resto */
+    grid-template-columns: 380px 1fr; 
     gap: 20px;
+    align-items: start; /* Para que la columna corta no se estire */
 }
 
-@media (max-width: 900px) {
-    .detail-grid {
-        grid-template-columns: 1fr; /* Una columna en móvil/tablet */
-    }
-}
-
-/* Sección Métricas */
-.metrics-panel h2, .chart-panel h2 {
-    margin-top: 0;
-    font-size: 1.1rem;
-    color: #fff;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-}
-
-.metric-card {
-    background: rgba(255,255,255,0.03);
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-}
-.metric-label {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-bottom: 5px;
-}
-.metric-value {
-    display: block;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--accent);
-}
-.metric-unit {
-    font-size: 0.8rem;
-    color: var(--muted);
-}
-
-/* Columna Derecha (Visuales) */
-.visuals-column {
+/* Columnas Flexibles verticales */
+.info-column, 
+.charts-column {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-.map-container {
-    height: 350px;
-    border-radius: 8px;
-    z-index: 1; /* Para que no tape el menú si se abre */
+/* Responsive: Móvil y Tablets */
+@media (max-width: 1000px) {
+    .detail-grid {
+        grid-template-columns: 1fr; /* Una sola columna */
+    }
+    .map-container {
+        height: 300px; /* Mapa un poco más bajo en móvil */
+    }
 }
 
+/* --- Títulos de Secciones --- */
+.card-panel h2, 
+.card-panel h3 {
+    margin-top: 0;
+    color: #e6f0ef;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.card-panel h2 { font-size: 1.1rem; font-weight: 700; }
+.card-panel h3 { font-size: 1rem; font-weight: 600; color: var(--accent); }
+
+/* --- Panel de Métricas (Grid pequeño) --- */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columnas forzadas en el sidebar */
+    gap: 12px;
+}
+
+.metric-card {
+    background: rgba(255,255,255,0.03);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.02);
+}
+
+.metric-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.metric-value {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.metric-unit {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-left: 2px;
+}
+
+/* --- Mapa --- */
+.map-container {
+    height: 350px;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000; /* Fondo negro mientras carga */
+}
+
+/* --- Gráficos (Charts) --- */
 .chart-container-wrapper {
-    height: 300px;
     position: relative;
+    width: 100%;
+    height: 220px; /* Altura fija para uniformidad */
+}
+
+/* --- Leyenda de Zonas (Nuevo) --- */
+.zones-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.loading-placeholder {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* Añadir en webapp/css/actividad.css */
+
+.metric-value.highlight {
+    color: #00ff88; /* Color acento para métricas importantes como Carga */
+    font-size: 2rem;
+}
+
+.metric-card.small-text .metric-value {
+    font-size: 1rem; /* Texto más pequeño para el nombre del dispositivo */
+    font-weight: 400;
 }
