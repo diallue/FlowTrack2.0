@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 /**
  * Renderiza las tarjetas de métricas en el contenedor especificado.
  * Intenta obtener la carga (TRIMP) de Cycling Analytics, si falla, la calcula localmente.
+ * Esta función organiza toda la información clave del entrenamiento.
  */
 function renderMetrics(analytics, stravaData, hrArray) {
     const container = document.getElementById('metrics-container');
@@ -104,7 +105,15 @@ function renderMetrics(analytics, stravaData, hrArray) {
     // --- 2. DISPOSITIVO ---
     const deviceName = stravaData.device_name || "Strava App / Desconocido";
 
-    // LISTA DE MÉTRICAS A MOSTRAR
+    /**
+     * Lista de métricas a mostrar.
+     * Cada elemento define:
+     *  - l: etiqueta visible
+     *  - v: valor
+     *  - u: unidad
+     *  - highlight: resaltar condiciones especiales
+     *  - small: formato reducido
+     */
     const metrics = [
         { l: `Carga (TRIMP) ${trimpLabel}`, v: trimpValue ? Math.round(trimpValue) : '—', u: '', highlight: true },
         { l: 'Potencia Norm.', v: analytics?.epower || analytics?.weighted_power, u: 'W' },
@@ -138,7 +147,8 @@ function renderMetrics(analytics, stravaData, hrArray) {
 
 /**
  * Calcula la carga de entrenamiento (TRIMP) usando el método de Edwards,
- * una métrica basada en el tiempo pasado en diferentes zonas de frecuencia cardíaca.
+ * basado en el tiempo acumulado en zonas de pulsaciones.
+ * Este cálculo es un plan B cuando la API de Cycling Analytics no devuelve TRIMP.
  */
 function calculateEdwardsTRIMP(hrData, maxHr) {
     if (!Array.isArray(hrData) || hrData.length === 0) return 0;
@@ -168,7 +178,10 @@ function calculateEdwardsTRIMP(hrData, maxHr) {
 // --- Helpers Genéricos ---
 
 /**
- * Normaliza los datos de stream. La API de Strava puede devolver un array simple o un objeto con una propiedad 'data'.
+ * Normaliza los datos de stream. La API de Strava puede devolver:
+ *   - array simple
+ *   - objeto con { data: [...] }
+ * Esta función unifica ambos formatos para simplificar su uso.
  */
 function extractStreamData(streamObj) {
     if (!streamObj) return null;
@@ -186,6 +199,7 @@ function formatNumber(value, decimals = 0) {
 
 /**
  * Formatea segundos en un formato de tiempo legible (Hh Mm).
+ * Útil para mostrar duración de actividad en la cabecera.
  */
 function formatTime(seconds) {
     if (!seconds) return '—';
@@ -195,7 +209,8 @@ function formatTime(seconds) {
 }
 
 /**
- * Renderiza la sección de cabecera con los datos principales de la actividad.
+ * Renderiza la sección de cabecera con nombre, tipo, icono, fecha,
+ * distancia total y tiempo en movimiento.
  */
 function renderHeader(stravaData) {
     document.getElementById('act-title').textContent = stravaData.name || "Actividad";
@@ -209,6 +224,7 @@ function renderHeader(stravaData) {
 
 /**
  * Renderiza el mapa de la ruta usando la librería Leaflet.
+ * Se dibuja la polilínea GPS y se auto-ajusta la vista para encajar toda la ruta.
  */
 function renderMap(latlngs) {
     const el = document.getElementById('map-detail');
@@ -226,6 +242,7 @@ function renderMap(latlngs) {
 
 /**
  * Renderiza una gráfica de línea usando la librería Chart.js.
+ * Esta función se usa para velocidad, altitud, pulso, cadencia, etc.
  */
 function renderChart(canvasId, labels, data, label, color, fill = false) {
     const canvas = document.getElementById(canvasId);
@@ -265,6 +282,10 @@ function renderChart(canvasId, labels, data, label, color, fill = false) {
     });
 }
 
+/**
+ * Renderiza un gráfico de barras con la distribución del tiempo
+ * en zonas de frecuencia cardíaca (Z1 - Z5).
+ */
 function renderZonesChart(hrData) {
     if (!hrData || !Array.isArray(hrData)) return;
     const zones = [0, 0, 0, 0, 0];
@@ -298,20 +319,22 @@ function renderZonesChart(hrData) {
     });
 }
 
+/**
+ * Muestra un estado de error en la interfaz cuando ocurre un fallo crítico.
+ */
 function showErrorState(message) {
     document.getElementById('act-title').textContent = "Error";
     document.getElementById('act-meta').innerHTML = `<span style="color:#ff5a5a;">${message}</span>`;
 }
 
+/**
+ * Renderiza las zonas de gradiente (pendiente) del recorrido.
+ * Esto permite identificar cuánto tiempo se ha pasado en llano, subida, bajada, etc.
+ */
 function renderGradientZones(gradeData) {
     if (!Array.isArray(gradeData) || gradeData.length === 0) return;
 
-    // Categorías de terreno
-    // 0: Bajada (< -1%)
-    // 1: Llano (-1% a 2%)
-    // 2: Falso Llano/Subida (2% a 5%)
-    // 3: Subida (5% a 8%)
-    // 4: Muro (> 8%)
+    // Categorías de terreno según intensidad de la pendiente.
     const zones = [0, 0, 0, 0, 0];
     let totalPoints = 0;
 

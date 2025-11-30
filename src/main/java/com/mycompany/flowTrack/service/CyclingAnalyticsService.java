@@ -29,11 +29,13 @@ public class CyclingAnalyticsService {
 
     /**
      * Constructor del servicio.
+     * Inicializa el cliente HTTP y el parser JSON.
+     *
      * @param apiToken El token de acceso a la API de Cycling Analytics.
      */
     public CyclingAnalyticsService(String apiToken) {
         this.apiToken = apiToken;
-        // Configura el cliente HTTP para realizar las peticiones.
+        // Configuración del cliente HTTP con timeout y versión HTTP 1.1.
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(30))
@@ -43,69 +45,72 @@ public class CyclingAnalyticsService {
 
     /**
      * Sube una actividad a Cycling Analytics para su análisis.
-     * Primero convierte los streams de Strava (JSON) a formato CSV y luego realiza la petición multipart/form-data.
-     * Maneja casos de éxito, errores y actividades duplicadas.
-     * 
+     * Flujo:
+     * 1. Convierte los streams de Strava (JSON) a CSV.
+     * 2. Construye y envía una petición multipart/form-data con el archivo.
+     * 3. Gestiona respuestas: éxito, error, o actividad duplicada.
+     *
      * @param activity Datos básicos de la actividad.
-     * @param stravaStreamsJson String JSON crudo de los streams de Strava.
-     * @return String JSON con los resultados del análisis (resumen) de Cycling Analytics.
+     * @param stravaStreamsJson String JSON crudo con los streams exportados desde Strava.
+     * @return JSON con el campo "summary" de la respuesta de Cycling Analytics.
      */
     public String uploadActivity(Activity activity, String stravaStreamsJson) throws IOException, InterruptedException {
-        // 1. Convertir datos de Strava a CSV para la API de CA
+        // Genera el CSV requerido por CA a partir de los streams de Strava.
         String csvContent = convertStreamsToCsv(stravaStreamsJson);
         if (csvContent.isEmpty()) throw new IOException("No hay streams para generar CSV");
 
         String filename = "strava_" + activity.getId() + ".csv";
-        // Genera un boundary único para la petición multipart/form-data.
+        // Boundary para multipart unique por request
         String boundary = "---Bound" + UUID.randomUUID().toString();
-        // Construye el cuerpo de la petición HTTP con el archivo CSV incrustado.
+        // Cuerpo multipart con el archivo CSV
         String body = buildMultipartBody(boundary, csvContent, filename);
 
-        // Construye la petición POST a la API de CA.
+        // Construcción de la request HTTP POST hacia CA
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_BASE_URL + "/me/rides"))
-                .header("Authorization", "Bearer " + this.apiToken) // Autenticación con Bearer token
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary) // Indica tipo multipart
+                .header("Authorization", "Bearer " + this.apiToken)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        // Envía la petición y obtiene la respuesta.
+        // Ejecución de la request
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        // A. Éxito normal (200-299)
+        // Caso éxito (status 200-299)
         if (response.statusCode() >= 200 && response.statusCode() < 300) {
-            // Procesa la respuesta para extraer solo el resumen del análisis.
             return processSuccessResponse(response.body()); 
         } 
         
-        // B. Error 400: Posible duplicado
+        // Caso duplicado o error 400
         else if (response.statusCode() == 400) {
             String errorBody = response.body();
-            // Verificamos si el error específico es "duplicate_ride"
+
+            // Si es un duplicado, CA devuelve "duplicate_ride"
             if (errorBody.contains("duplicate_ride")) {
-                // Si es un duplicado, extraemos el ID de la actividad existente.
                 String existingRideId = extractRideIdFromError(errorBody);
                 if (existingRideId != null) {
                     System.out.println("Actividad duplicada. Recuperando datos existentes para ID: " + existingRideId);
-                    // Recuperamos los datos de análisis de la actividad ya subida.
                     return getExistingRideAnalysis(existingRideId);
                 }
             }
             throw new IOException("Error CA (400): " + errorBody);
         } 
         
-        // C. Otros errores
+        // Otros errores (401, 500, etc)
         else {
             throw new IOException("Error CA (" + response.statusCode() + "): " + response.body());
         }
     }
 
     /**
-     * Recupera los datos de análisis de una actividad que ya existe en Cycling Analytics usando su ID interno de CA.
+     * Recupera datos de análisis para una actividad ya existente en Cycling Analytics.
+     * Usado cuando la API nos informa que la actividad es un duplicado.
+     *
+     * @param rideId ID interno de CA para la actividad.
      */
     private String getExistingRideAnalysis(String rideId) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_BASE_URL + "/ride/" + rideId)) // Endpoint para obtener detalles de un ride específico.
+                .uri(URI.create(API_BASE_URL + "/ride/" + rideId))
                 .header("Authorization", "Bearer " + this.apiToken)
                 .GET()
                 .build();
@@ -113,7 +118,6 @@ public class CyclingAnalyticsService {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
-            // Procesa la respuesta para extraer solo el resumen del análisis.
             return processSuccessResponse(response.body());
         } else {
             throw new IOException("Error recuperando duplicado (" + response.statusCode() + ")");
@@ -121,21 +125,22 @@ public class CyclingAnalyticsService {
     }
 
     /**
-     * Procesa la respuesta JSON de CA para devolver solo la parte 'summary' 
-     * (que es la que mapea con nuestra clase AnalysisResults) e inyecta campos útiles adicionales.
+     * Procesa la respuesta JSON de CA y devuelve únicamente el objeto "summary".
+     * Además inyecta:
+     *  - ID de la actividad en CA
+     *  - curva de potencia (si está disponible)
      */
     private String processSuccessResponse(String jsonResponse) throws IOException {
         JsonNode root = objectMapper.readTree(jsonResponse);
         
-        // La API de CA puede devolver un objeto grande; las métricas clave están en 'summary'.
+        // La API devuelve gran cantidad de datos, pero el análisis está dentro de "summary".
         if (root.has("summary")) {
             JsonNode summary = root.get("summary");
             
-            // Si el 'summary' es un objeto (lo normal), inyectamos el ID de la actividad y la curva de potencia si están disponibles en la raíz.
             if (summary.isObject()) {
-                // Inyectamos el ID de CA en el summary para que el frontend pueda usarlo.
+                // Añadir ID de CA (root.id incluido en el JSON)
                 ((ObjectNode) summary).put("id", root.path("id").asLong());
-                // Inyectamos también la curva de potencia si está disponible en la respuesta raíz.
+                // Inyectar power_curve si existe en la respuesta completa
                 if (root.has("power_curve")) {
                     ((ObjectNode) summary).set("power_curve", root.get("power_curve"));
                 }
@@ -143,20 +148,22 @@ public class CyclingAnalyticsService {
             return summary.toString();
         }
         
-        return jsonResponse; // Si no hay summary, devolvemos el JSON crudo tal cual.
+        // Si no hay summary, se devuelve el JSON completo.
+        return jsonResponse;
     }
 
     /**
-     * Extrae el ID numérico de la actividad duplicada a partir del mensaje de error JSON de CA.
+     * Extrae el ID numérico de una actividad duplicada a partir del JSON de error.
+     * Cycling Analytics no devuelve un campo explícito, así que se busca mediante regex.
      */
     private String extractRideIdFromError(String errorJson) {
-        // Busca un patrón numérico (secuencia de dígitos) dentro del mensaje.
         Pattern p = Pattern.compile("(\\d+)");
         Matcher m = p.matcher(errorJson);
         String foundId = null;
+
+        // Se asume que los IDs válidos son números largos (más de 5 dígitos)
         while(m.find()) {
             String match = m.group(1);
-            // Asume que IDs largos (ej. > 5 dígitos) son el ID de la actividad.
             if (match.length() > 5) { 
                 foundId = match;
             }
@@ -167,11 +174,13 @@ public class CyclingAnalyticsService {
     // --- MÉTODOS DE CONVERSIÓN DE STREAMS DE STRAVA (JSON) A CSV ---
     
     /**
-     * Convierte el JSON de streams de Strava a un formato CSV compatible con Cycling Analytics.
+     * Convierte los streams de Strava a un CSV compatible con Cycling Analytics.
+     * CA requiere columnas: Time,Power,Heart Rate,Cadence,Elevation,Speed
      */
     private String convertStreamsToCsv(String jsonStreams) throws IOException {
         JsonNode root = objectMapper.readTree(jsonStreams);
-        // Extrae los arrays de datos para cada métrica.
+
+        // Extrae listas desde el JSON
         List<Integer> times = getStreamDataInt(root, "time");
         List<Integer> watts = getStreamDataInt(root, "watts");
         List<Integer> hr = getStreamDataInt(root, "heartrate");
@@ -179,13 +188,13 @@ public class CyclingAnalyticsService {
         List<Double> alt = getStreamDataDouble(root, "altitude");
         List<Double> speed = getStreamDataDouble(root, "velocity_smooth");
 
+        // Sin datos de tiempo, no se genera CSV
         if (times == null || times.isEmpty()) return "";
 
         StringBuilder csv = new StringBuilder();
-        // Define la cabecera CSV requerida por CA.
         csv.append("Time,Power,Heart Rate,Cadence,Elevation,Speed\n");
 
-        // Itera sobre los datos y construye las filas del CSV.
+        // Construcción línea a línea del CSV
         for (int i = 0; i < times.size(); i++) {
             csv.append(times.get(i)).append(",");
             csv.append(getValue(watts, i)).append(",");
@@ -199,73 +208,68 @@ public class CyclingAnalyticsService {
     }
     
     /**
-     * Helper para obtener un valor de una lista de streams, usando "0" como valor por defecto si no existe o es nulo.
+     * Devuelve un valor de la lista o "0" si no existe.
+     * Se usa para evitar nulls en el CSV final.
      */
     private String getValue(List<?> list, int index) {
         if (list != null && index < list.size() && list.get(index) != null) return String.valueOf(list.get(index));
-        return "0"; // Valor por defecto para datos faltantes.
+        return "0";
     }
 
     /**
-     * Helper para extraer un array de enteros de un nodo JSON de streams.
+     * Extrae un stream de enteros del JSON.
      */
     private List<Integer> getStreamDataInt(JsonNode root, String key) {
         if (root.has(key) && root.get(key).has("data")) {
-            try { return objectMapper.convertValue(root.get(key).get("data"), objectMapper.getTypeFactory().constructCollectionType(List.class, Integer.class)); } catch (Exception e) { return null; }
+            try { 
+                return objectMapper.convertValue(
+                    root.get(key).get("data"),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Integer.class)
+                ); 
+            } catch (Exception e) { 
+                return null; 
+            }
         }
         return null;
     }
     
     /**
-     * Helper para extraer un array de doubles de un nodo JSON de streams.
+     * Extrae un stream de doubles del JSON.
      */
     private List<Double> getStreamDataDouble(JsonNode root, String key) {
         if (root.has(key) && root.get(key).has("data")) {
-            try { return objectMapper.convertValue(root.get(key).get("data"), objectMapper.getTypeFactory().constructCollectionType(List.class, Double.class)); } catch (Exception e) { return null; }
+            try { 
+                return objectMapper.convertValue(
+                    root.get(key).get("data"),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Double.class)
+                ); 
+            } catch (Exception e) { 
+                return null; 
+            }
         }
         return null;
     }
 
     /**
-     * Construye el cuerpo de la petición HTTP multipart/form-data.
+     * Construye una petición multipart/form-data manualmente.
+     * CA requiere el archivo CSV asociado al campo "data".
      */
     private String buildMultipartBody(String boundary, String csvContent, String filename) {
         StringBuilder builder = new StringBuilder();
-        String crlf = "\r\n"; // El estándar HTTP requiere CRLF (retorno de carro + salto de línea)
+        String crlf = "\r\n"; 
+
         builder.append("--").append(boundary).append(crlf);
-        // Define la disposición del contenido como un archivo con un nombre específico.
         builder.append("Content-Disposition: form-data; name=\"data\"; filename=\"").append(filename).append("\"").append(crlf);
-        builder.append("Content-Type: text/csv").append(crlf); // Indica el tipo de contenido que se envía.
-        builder.append(crlf); // Línea vacía requerida antes del contenido real del archivo.
+        builder.append("Content-Type: text/csv").append(crlf);
+        builder.append(crlf);
         builder.append(csvContent).append(crlf);
+
         builder.append("--").append(boundary).append(crlf);
         builder.append("Content-Disposition: form-data; name=\"format\"").append(crlf).append(crlf);
         builder.append("csv").append(crlf);
-        builder.append("--").append(boundary).append("--").append(crlf); // Marcador de cierre de la petición.
+
+        builder.append("--").append(boundary).append("--").append(crlf);
+
         return builder.toString();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
