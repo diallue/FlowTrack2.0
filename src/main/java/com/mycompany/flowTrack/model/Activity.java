@@ -15,321 +15,322 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @file Activity.java
- * @brief Modelo para representar una actividad deportiva de Strava
- * * Esta clase encapsula toda la información relacionada con una actividad
+ * Modelo para representar una actividad deportiva de Strava.
+ * 
+ * Esta clase encapsula toda la información relacionada con una actividad
  * deportiva obtenida desde la API de Strava, incluyendo estadísticas,
  * ubicación, tiempos y métricas de rendimiento.
- * * @author diego
+ *
+ * @author diego
  * @author ignacio
  * @author alvaro
- * @date 2025
  * @version 1.0
  */
+
 
 public class Activity {
     
     /**
-     * @brief Identificador único de la actividad en Strava
-     * @details Este ID es generado por Strava y es único para cada actividad
+     *   Identificador único de la actividad en Strava
+     *   Este ID es generado por Strava y es único para cada actividad
      */
     private Long id;
     
     /**
-     * @brief Estado del recurso en la API
-     * @details Indica el nivel de detalle de los datos (1=meta, 2=summary, 3=detail)
+     *   Estado del recurso en la API
+     *   Indica el nivel de detalle de los datos (1=meta, 2=summary, 3=detail)
      */
     private Integer resourceState;
     
     /**
-     * @brief Identificador externo de la actividad
-     * @details ID proporcionado por el dispositivo o aplicación que creó la actividad
+     *   Identificador externo de la actividad
+     *   ID proporcionado por el dispositivo o aplicación que creó la actividad
      */
     private String externalId;
     
     /**
-     * @brief ID de la carga/upload de la actividad
-     * @details Referencia a la carga original si la actividad fue importada
+     *   ID de la carga/upload de la actividad
+     *   Referencia a la carga original si la actividad fue importada
      */
     private Long uploadId;
     
     /**
-     * @brief Nombre de la actividad
-     * @details Título descriptivo asignado por el usuario o generado automáticamente
+     *   Nombre de la actividad
+     *   Título descriptivo asignado por el usuario o generado automáticamente
      */
     private String name;
     
     /**
-     * @brief Descripción de la actividad
-     * @details Notas o descripción personal de la actividad
+     *   Descripción de la actividad
+     *   Notas o descripción personal de la actividad
      */
     private String description;
     
     /**
-     * @brief Tipo principal de la actividad
-     * @details Ej: "Run", "Ride", "Swim"
+     *   Tipo principal de la actividad
+     *   Ej: "Run", "Ride", "Swim"
      */
     private String type; // Run, Ride, etc.
     
     /**
-     * @brief Tipo de deporte específico
-     * @details Ej: "MountainBikeRide", "TrailRun", "VirtualRide"
+     *   Tipo de deporte específico
+     *   Ej: "MountainBikeRide", "TrailRun", "VirtualRide"
      */
     private String sportType; // MountainBikeRide, TrailRun, etc.
     
     /**
-     * @brief ID del atleta propietario de la actividad
+     *   ID del atleta propietario de la actividad
      */
     private Long athleteId;
     
     // Distancias y tiempos
     
     /**
-     * @brief Distancia total de la actividad
-     * @details Almacenada en metros
+     *   Distancia total de la actividad
+     *   Almacenada en metros
      */
     private Float distance; // En metros
     
     /**
-     * @brief Tiempo total en movimiento
-     * @details Almacenado en segundos
+     *   Tiempo total en movimiento
+     *   Almacenado en segundos
      */
     private Integer movingTime; // En segundos
     
     /**
-     * @brief Tiempo total transcurrido (incluyendo pausas)
-     * @details Almacenado en segundos
+     *   Tiempo total transcurrido (incluyendo pausas)
+     *   Almacenado en segundos
      */
     private Integer elapsedTime; // En segundos
     
     /**
-     * @brief Ganancia total de elevación
-     * @details Almacenada en metros
+     *   Ganancia total de elevación
+     *   Almacenada en metros
      */
     private Float totalElevationGain; // En metros
     
     // Fechas
     
     /**
-     * @brief Fecha y hora de inicio de la actividad en UTC
-     * @details Almacenado como ZonedDateTime para incluir la zona horaria
+     *   Fecha y hora de inicio de la actividad en UTC
+     *   Almacenado como ZonedDateTime para incluir la zona horaria
      */
     private ZonedDateTime startDate;
     
     /**
-     * @brief Fecha y hora de inicio en la zona horaria local de la actividad
-     * @details Almacenado como LocalDateTime (sin zona horaria explícita)
+     *   Fecha y hora de inicio en la zona horaria local de la actividad
+     *   Almacenado como LocalDateTime (sin zona horaria explícita)
      */
     private LocalDateTime startDateLocal;
     
     /**
-     * @brief Zona horaria de la actividad
-     * @details Ej: "(GMT-08:00) America/Los_Angeles"
+     *   Zona horaria de la actividad
+     *   Ej: "(GMT-08:00) America/Los_Angeles"
      */
     private String timezone;
     
     /**
-     * @brief Desplazamiento horario respecto a UTC
-     * @details Valor en segundos
+     *   Desplazamiento horario respecto a UTC
+     *   Valor en segundos
      */
     private Float utcOffset;
     
     // Ubicación
     
     /**
-     * @brief Coordenadas de inicio [latitud, longitud]
+     *   Coordenadas de inicio [latitud, longitud]
      */
     private List<Float> startLatlng;
     
     /**
-     * @brief Coordenadas de fin [latitud, longitud]
+     *   Coordenadas de fin [latitud, longitud]
      */
     private List<Float> endLatlng;
     
     // Estadísticas
     
     /**
-     * @brief Velocidad media
-     * @details Almacenada en metros por segundo (m/s)
+     *   Velocidad media
+     *   Almacenada en metros por segundo (m/s)
      */
     private Float averageSpeed; // m/s
     
     /**
-     * @brief Velocidad máxima
-     * @details Almacenada en metros por segundo (m/s)
+     *   Velocidad máxima
+     *   Almacenada en metros por segundo (m/s)
      */
     private Float maxSpeed; // m/s
     
     /**
-     * @brief Cadencia media (pasos o pedaladas por minuto)
+     *   Cadencia media (pasos o pedaladas por minuto)
      */
     private Float averageCadence;
     
     /**
-     * @brief Temperatura media durante la actividad (si está disponible)
-     * @details En grados Celsius
+     *   Temperatura media durante la actividad (si está disponible)
+     *   En grados Celsius
      */
     private Float averageTemp;
     
     /**
-     * @brief Potencia media (si está disponible)
-     * @details En vatios (Watts)
+     *   Potencia media (si está disponible)
+     *   En vatios (Watts)
      */
     private Float averageWatts;
     
     /**
-     * @brief Potencia media ponderada (si está disponible)
-     * @details En vatios (Watts)
+     *   Potencia media ponderada (si está disponible)
+     *   En vatios (Watts)
      */
     private Integer weightedAverageWatts;
     
     /**
-     * @brief Trabajo total realizado
-     * @details En kilojulios (kJ)
+     *   Trabajo total realizado
+     *   En kilojulios (kJ)
      */
     private Float kilojoules;
     
     /**
-     * @brief Potencia máxima registrada
-     * @details En vatios (Watts)
+     *   Potencia máxima registrada
+     *   En vatios (Watts)
      */
     private Integer maxWatts;
     
     /**
-     * @brief Calorías quemadas estimadas
+     *   Calorías quemadas estimadas
      */
     private Float calories;
     
     // Elevación
     
     /**
-     * @brief Elevación máxima alcanzada
-     * @details En metros
+     *   Elevación máxima alcanzada
+     *   En metros
      */
     private Float elevHigh;
     
     /**
-     * @brief Elevación mínima alcanzada
-     * @details En metros
+     *   Elevación mínima alcanzada
+     *   En metros
      */
     private Float elevLow;
     
     // Flags (Booleanos)
     
     /**
-     * @brief Indica si la actividad se realizó en un rodillo o entrenador
+     *   Indica si la actividad se realizó en un rodillo o entrenador
      */
     private Boolean trainer;
     
     /**
-     * @brief Indica si la actividad fue marcada como un desplazamiento (ej. al trabajo)
+     *   Indica si la actividad fue marcada como un desplazamiento (ej. al trabajo)
      */
     private Boolean commute;
     
     /**
-     * @brief Indica si la actividad fue introducida manualmente
+     *   Indica si la actividad fue introducida manualmente
      */
     private Boolean manual;
     
     /**
-     * @brief Indica si la actividad es privada
-     * @details Se usa 'privateActivity' porque 'private' es palabra reservada en Java
+     *   Indica si la actividad es privada
+     *   Se usa 'privateActivity' porque 'private' es palabra reservada en Java
      */
     private Boolean privateActivity; // "private" es palabra reservada
     
     /**
-     * @brief Indica si la actividad ha sido marcada (flagged) por problemas
+     *   Indica si la actividad ha sido marcada (flagged) por problemas
      */
     private Boolean flagged;
     
     /**
-     * @brief Indica si la actividad tiene datos de frecuencia cardíaca
+     *   Indica si la actividad tiene datos de frecuencia cardíaca
      */
     private Boolean hasHeartrate;
     
     /**
-     * @brief Indica si el dispositivo registró potencia (vatios)
+     *   Indica si el dispositivo registró potencia (vatios)
      */
     private Boolean deviceWatts;
     
     /**
-     * @brief Indica si el atleta autenticado ha dado "Kudos" a esta actividad
+     *   Indica si el atleta autenticado ha dado "Kudos" a esta actividad
      */
     private Boolean hasKudoed;
     
     // Contadores
     
     /**
-     * @brief Número de logros (PRs, KOMs/QOMs) en la actividad
+     *   Número de logros (PRs, KOMs/QOMs) en la actividad
      */
     private Integer achievementCount;
     
     /**
-     * @brief Número total de "Kudos" recibidos
+     *   Número total de "Kudos" recibidos
      */
     private Integer kudosCount;
     
     /**
-     * @brief Número total de comentarios recibidos
+     *   Número total de comentarios recibidos
      */
     private Integer commentCount;
     
     /**
-     * @brief Número de atletas que participaron en la actividad (grupal)
+     *   Número de atletas que participaron en la actividad (grupal)
      */
     private Integer athleteCount;
     
     /**
-     * @brief Número de fotos adjuntas a la actividad
+     *   Número de fotos adjuntas a la actividad
      */
     private Integer photoCount;
     
     /**
-     * @brief Recuento total de fotos (incluyendo fotos de Instagram)
+     *   Recuento total de fotos (incluyendo fotos de Instagram)
      */
     private Integer totalPhotoCount;
     
     /**
-     * @brief Número de Récords Personales (PR) logrados
+     *   Número de Récords Personales (PR) logrados
      */
     private Integer prCount;
     
     // Otros
     
     /**
-     * @brief ID del equipamiento (bicicleta, zapatillas) utilizado
+     *   ID del equipamiento (bicicleta, zapatillas) utilizado
      */
     private String gearId;
     
     /**
-     * @brief Tipo de entrenamiento (si está especificado)
-     * @details Ej: 0 (carrera), 1 (entrenamiento), 2 (larga distancia), 3 (series)
+     *   Tipo de entrenamiento (si está especificado)
+     *   Ej: 0 (carrera), 1 (entrenamiento), 2 (larga distancia), 3 (series)
      */
     private Integer workoutType;
     
     /**
-     * @brief Nombre del dispositivo que grabó la actividad
-     * @details Ej: "Garmin Edge 530"
+     *   Nombre del dispositivo que grabó la actividad
+     *   Ej: "Garmin Edge 530"
      */
     private String deviceName;
     
     /**
-     * @brief Token para incrustar (embed) la actividad en una web
+     *   Token para incrustar (embed) la actividad en una web
      */
     private String embedToken;
     
     // Constructores
     
     /**
-     * @brief Constructor por defecto
-     * @details Crea una instancia vacía de Activity.
+     *   Constructor por defecto
+     *   Crea una instancia vacía de Activity.
      */
     public Activity() {}
     
     // Getters y Setters
     
     /**
-     * @brief Obtiene el ID único de la actividad
+     *   Obtiene el ID único de la actividad
      * @return El ID de la actividad
      */
     public Long getId() {
@@ -337,7 +338,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el ID único de la actividad
+     *   Establece el ID único de la actividad
      * @param id El nuevo ID para la actividad
      */
     public void setId(Long id) {
@@ -345,7 +346,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el estado del recurso
+     *   Obtiene el estado del recurso
      * @return El nivel de detalle de los datos (1, 2 o 3)
      */
     public Integer getResourceState() {
@@ -353,7 +354,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el estado del recurso
+     *   Establece el estado del recurso
      * @param resourceState El nuevo estado del recurso
      */
     public void setResourceState(Integer resourceState) {
@@ -361,7 +362,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el ID externo
+     *   Obtiene el ID externo
      * @return El ID externo de la actividad
      */
     public String getExternalId() {
@@ -369,7 +370,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el ID externo
+     *   Establece el ID externo
      * @param externalId El nuevo ID externo
      */
     public void setExternalId(String externalId) {
@@ -377,7 +378,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el ID de la carga (upload)
+     *   Obtiene el ID de la carga (upload)
      * @return El ID de la carga
      */
     public Long getUploadId() {
@@ -385,7 +386,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el ID de la carga (upload)
+     *   Establece el ID de la carga (upload)
      * @param uploadId El nuevo ID de la carga
      */
     public void setUploadId(Long uploadId) {
@@ -393,7 +394,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el nombre de la actividad
+     *   Obtiene el nombre de la actividad
      * @return El nombre
      */
     public String getName() {
@@ -401,7 +402,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el nombre de la actividad
+     *   Establece el nombre de la actividad
      * @param name El nuevo nombre
      */
     public void setName(String name) {
@@ -409,7 +410,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la descripción de la actividad
+     *   Obtiene la descripción de la actividad
      * @return La descripción
      */
     public String getDescription() {
@@ -417,7 +418,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la descripción de la actividad
+     *   Establece la descripción de la actividad
      * @param description La nueva descripción
      */
     public void setDescription(String description) {
@@ -425,7 +426,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el tipo principal de la actividad
+     *   Obtiene el tipo principal de la actividad
      * @return El tipo (Ej: "Run")
      */
     public String getType() {
@@ -433,7 +434,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el tipo principal de la actividad
+     *   Establece el tipo principal de la actividad
      * @param type El nuevo tipo
      */
     public void setType(String type) {
@@ -441,7 +442,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el tipo de deporte específico
+     *   Obtiene el tipo de deporte específico
      * @return El tipo de deporte (Ej: "TrailRun")
      */
     public String getSportType() {
@@ -449,7 +450,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el tipo de deporte específico
+     *   Establece el tipo de deporte específico
      * @param sportType El nuevo tipo de deporte
      */
     public void setSportType(String sportType) {
@@ -457,7 +458,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el ID del atleta
+     *   Obtiene el ID del atleta
      * @return El ID del atleta
      */
     public Long getAthleteId() {
@@ -465,7 +466,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el ID del atleta
+     *   Establece el ID del atleta
      * @param athleteId El nuevo ID del atleta
      */
     public void setAthleteId(Long athleteId) {
@@ -473,7 +474,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la distancia en metros
+     *   Obtiene la distancia en metros
      * @return La distancia en metros
      */
     public Float getDistance() {
@@ -481,7 +482,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la distancia en metros
+     *   Establece la distancia en metros
      * @param distance La nueva distancia en metros
      */
     public void setDistance(Float distance) {
@@ -489,7 +490,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el tiempo en movimiento en segundos
+     *   Obtiene el tiempo en movimiento en segundos
      * @return El tiempo en movimiento en segundos
      */
     public Integer getMovingTime() {
@@ -497,7 +498,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el tiempo en movimiento en segundos
+     *   Establece el tiempo en movimiento en segundos
      * @param movingTime El nuevo tiempo en movimiento
      */
     public void setMovingTime(Integer movingTime) {
@@ -505,7 +506,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el tiempo transcurrido total en segundos
+     *   Obtiene el tiempo transcurrido total en segundos
      * @return El tiempo transcurrido en segundos
      */
     public Integer getElapsedTime() {
@@ -513,7 +514,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el tiempo transcurrido total en segundos
+     *   Establece el tiempo transcurrido total en segundos
      * @param elapsedTime El nuevo tiempo transcurrido
      */
     public void setElapsedTime(Integer elapsedTime) {
@@ -521,7 +522,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la ganancia total de elevación en metros
+     *   Obtiene la ganancia total de elevación en metros
      * @return La ganancia de elevación en metros
      */
     public Float getTotalElevationGain() {
@@ -529,7 +530,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la ganancia total de elevación en metros
+     *   Establece la ganancia total de elevación en metros
      * @param totalElevationGain La nueva ganancia de elevación
      */
     public void setTotalElevationGain(Float totalElevationGain) {
@@ -537,7 +538,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la fecha de inicio (UTC)
+     *   Obtiene la fecha de inicio (UTC)
      * @return La fecha de inicio como ZonedDateTime
      */
     public ZonedDateTime getStartDate() {
@@ -545,7 +546,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la fecha de inicio (UTC)
+     *   Establece la fecha de inicio (UTC)
      * @param startDate La nueva fecha de inicio
      */
     public void setStartDate(ZonedDateTime startDate) {
@@ -553,7 +554,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la fecha de inicio local
+     *   Obtiene la fecha de inicio local
      * @return La fecha de inicio local como LocalDateTime
      */
     public LocalDateTime getStartDateLocal() {
@@ -561,7 +562,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la fecha de inicio local
+     *   Establece la fecha de inicio local
      * @param startDateLocal La nueva fecha de inicio local
      */
     public void setStartDateLocal(LocalDateTime startDateLocal) {
@@ -569,7 +570,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la zona horaria
+     *   Obtiene la zona horaria
      * @return El string de la zona horaria
      */
     public String getTimezone() {
@@ -577,7 +578,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la zona horaria
+     *   Establece la zona horaria
      * @param timezone El nuevo string de la zona horaria
      */
     public void setTimezone(String timezone) {
@@ -585,7 +586,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el desplazamiento UTC en segundos
+     *   Obtiene el desplazamiento UTC en segundos
      * @return El desplazamiento UTC
      */
     public Float getUtcOffset() {
@@ -593,7 +594,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el desplazamiento UTC en segundos
+     *   Establece el desplazamiento UTC en segundos
      * @param utcOffset El nuevo desplazamiento UTC
      */
     public void setUtcOffset(Float utcOffset) {
@@ -601,7 +602,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene las coordenadas de inicio
+     *   Obtiene las coordenadas de inicio
      * @return Una lista [latitud, longitud]
      */
     public List<Float> getStartLatlng() {
@@ -609,7 +610,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece las coordenadas de inicio
+     *   Establece las coordenadas de inicio
      * @param startLatlng Una lista [latitud, longitud]
      */
     public void setStartLatlng(List<Float> startLatlng) {
@@ -617,7 +618,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene las coordenadas de fin
+     *   Obtiene las coordenadas de fin
      * @return Una lista [latitud, longitud]
      */
     public List<Float> getEndLatlng() {
@@ -625,7 +626,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece las coordenadas de fin
+     *   Establece las coordenadas de fin
      * @param endLatlng Una lista [latitud, longitud]
      */
     public void setEndLatlng(List<Float> endLatlng) {
@@ -633,7 +634,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la velocidad media en m/s
+     *   Obtiene la velocidad media en m/s
      * @return La velocidad media
      */
     public Float getAverageSpeed() {
@@ -641,7 +642,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la velocidad media en m/s
+     *   Establece la velocidad media en m/s
      * @param averageSpeed La nueva velocidad media
      */
     public void setAverageSpeed(Float averageSpeed) {
@@ -649,7 +650,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la velocidad máxima en m/s
+     *   Obtiene la velocidad máxima en m/s
      * @return La velocidad máxima
      */
     public Float getMaxSpeed() {
@@ -657,7 +658,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la velocidad máxima en m/s
+     *   Establece la velocidad máxima en m/s
      * @param maxSpeed La nueva velocidad máxima
      */
     public void setMaxSpeed(Float maxSpeed) {
@@ -665,7 +666,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la cadencia media
+     *   Obtiene la cadencia media
      * @return La cadencia media
      */
     public Float getAverageCadence() {
@@ -673,7 +674,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la cadencia media
+     *   Establece la cadencia media
      * @param averageCadence La nueva cadencia media
      */
     public void setAverageCadence(Float averageCadence) {
@@ -681,7 +682,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la temperatura media
+     *   Obtiene la temperatura media
      * @return La temperatura media en Celsius
      */
     public Float getAverageTemp() {
@@ -689,7 +690,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la temperatura media
+     *   Establece la temperatura media
      * @param averageTemp La nueva temperatura media
      */
     public void setAverageTemp(Float averageTemp) {
@@ -697,7 +698,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la potencia media en vatios
+     *   Obtiene la potencia media en vatios
      * @return La potencia media
      */
     public Float getAverageWatts() {
@@ -705,7 +706,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la potencia media en vatios
+     *   Establece la potencia media en vatios
      * @param averageWatts La nueva potencia media
      */
     public void setAverageWatts(Float averageWatts) {
@@ -713,7 +714,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la potencia media ponderada en vatios
+     *   Obtiene la potencia media ponderada en vatios
      * @return La potencia media ponderada
      */
     public Integer getWeightedAverageWatts() {
@@ -721,7 +722,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la potencia media ponderada en vatios
+     *   Establece la potencia media ponderada en vatios
      * @param weightedAverageWatts La nueva potencia media ponderada
      */
     public void setWeightedAverageWatts(Integer weightedAverageWatts) {
@@ -729,7 +730,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el trabajo total en kilojulios
+     *   Obtiene el trabajo total en kilojulios
      * @return El trabajo en kJ
      */
     public Float getKilojoules() {
@@ -737,7 +738,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el trabajo total en kilojulios
+     *   Establece el trabajo total en kilojulios
      * @param kilojoules El nuevo trabajo en kJ
      */
     public void setKilojoules(Float kilojoules) {
@@ -745,7 +746,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la potencia máxima en vatios
+     *   Obtiene la potencia máxima en vatios
      * @return La potencia máxima
      */
     public Integer getMaxWatts() {
@@ -753,7 +754,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la potencia máxima en vatios
+     *   Establece la potencia máxima en vatios
      * @param maxWatts La nueva potencia máxima
      */
     public void setMaxWatts(Integer maxWatts) {
@@ -761,7 +762,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene las calorías estimadas
+     *   Obtiene las calorías estimadas
      * @return Las calorías
      */
     public Float getCalories() {
@@ -769,7 +770,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece las calorías estimadas
+     *   Establece las calorías estimadas
      * @param calories Las nuevas calorías
      */
     public void setCalories(Float calories) {
@@ -777,7 +778,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la elevación máxima en metros
+     *   Obtiene la elevación máxima en metros
      * @return La elevación máxima
      */
     public Float getElevHigh() {
@@ -785,7 +786,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la elevación máxima en metros
+     *   Establece la elevación máxima en metros
      * @param elevHigh La nueva elevación máxima
      */
     public void setElevHigh(Float elevHigh) {
@@ -793,7 +794,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene la elevación mínima en metros
+     *   Obtiene la elevación mínima en metros
      * @return La elevación mínima
      */
     public Float getElevLow() {
@@ -801,7 +802,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece la elevación mínima en metros
+     *   Establece la elevación mínima en metros
      * @param elevLow La nueva elevación mínima
      */
     public void setElevLow(Float elevLow) {
@@ -809,7 +810,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si la actividad fue en rodillo/entrenador
+     *   Comprueba si la actividad fue en rodillo/entrenador
      * @return true si fue en rodillo, false en caso contrario
      */
     public Boolean getTrainer() {
@@ -817,7 +818,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si la actividad fue en rodillo/entrenador
+     *   Establece si la actividad fue en rodillo/entrenador
      * @param trainer El nuevo valor
      */
     public void setTrainer(Boolean trainer) {
@@ -825,7 +826,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si la actividad fue un desplazamiento
+     *   Comprueba si la actividad fue un desplazamiento
      * @return true si fue un desplazamiento, false en caso contrario
      */
     public Boolean getCommute() {
@@ -833,7 +834,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si la actividad fue un desplazamiento
+     *   Establece si la actividad fue un desplazamiento
      * @param commute El nuevo valor
      */
     public void setCommute(Boolean commute) {
@@ -841,7 +842,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si la actividad fue introducida manualmente
+     *   Comprueba si la actividad fue introducida manualmente
      * @return true si fue manual, false en caso contrario
      */
     public Boolean getManual() {
@@ -849,7 +850,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si la actividad fue introducida manualmente
+     *   Establece si la actividad fue introducida manualmente
      * @param manual El nuevo valor
      */
     public void setManual(Boolean manual) {
@@ -857,7 +858,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si la actividad es privada
+     *   Comprueba si la actividad es privada
      * @return true si es privada, false en caso contrario
      */
     public Boolean getPrivateActivity() {
@@ -865,7 +866,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si la actividad es privada
+     *   Establece si la actividad es privada
      * @param privateActivity El nuevo valor
      */
     public void setPrivateActivity(Boolean privateActivity) {
@@ -873,7 +874,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si la actividad está marcada (flagged)
+     *   Comprueba si la actividad está marcada (flagged)
      * @return true si está marcada, false en caso contrario
      */
     public Boolean getFlagged() {
@@ -881,7 +882,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si la actividad está marcada (flagged)
+     *   Establece si la actividad está marcada (flagged)
      * @param flagged El nuevo valor
      */
     public void setFlagged(Boolean flagged) {
@@ -889,7 +890,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si la actividad tiene datos de frecuencia cardíaca
+     *   Comprueba si la actividad tiene datos de frecuencia cardíaca
      * @return true si tiene datos de FC, false en caso contrario
      */
     public Boolean getHasHeartrate() {
@@ -897,7 +898,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si la actividad tiene datos de frecuencia cardíaca
+     *   Establece si la actividad tiene datos de frecuencia cardíaca
      * @param hasHeartrate El nuevo valor
      */
     public void setHasHeartrate(Boolean hasHeartrate) {
@@ -905,7 +906,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si el dispositivo registró potencia (vatios)
+     *   Comprueba si el dispositivo registró potencia (vatios)
      * @return true si registró vatios, false en caso contrario
      */
     public Boolean getDeviceWatts() {
@@ -913,7 +914,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si el dispositivo registró potencia (vatios)
+     *   Establece si el dispositivo registró potencia (vatios)
      * @param deviceWatts El nuevo valor
      */
     public void setDeviceWatts(Boolean deviceWatts) {
@@ -921,7 +922,7 @@ public class Activity {
     }
     
     /**
-     * @brief Comprueba si el usuario autenticado ha dado "Kudos"
+     *   Comprueba si el usuario autenticado ha dado "Kudos"
      * @return true si ha dado Kudos, false en caso contrario
      */
     public Boolean getHasKudoed() {
@@ -929,7 +930,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece si el usuario autenticado ha dado "Kudos"
+     *   Establece si el usuario autenticado ha dado "Kudos"
      * @param hasKudoed El nuevo valor
      */
     public void setHasKudoed(Boolean hasKudoed) {
@@ -937,7 +938,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número de logros
+     *   Obtiene el número de logros
      * @return El número de logros
      */
     public Integer getAchievementCount() {
@@ -945,7 +946,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número de logros
+     *   Establece el número de logros
      * @param achievementCount El nuevo número de logros
      */
     public void setAchievementCount(Integer achievementCount) {
@@ -953,7 +954,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número de Kudos
+     *   Obtiene el número de Kudos
      * @return El número de Kudos
      */
     public Integer getKudosCount() {
@@ -961,7 +962,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número de Kudos
+     *   Establece el número de Kudos
      * @param kudosCount El nuevo número de Kudos
      */
     public void setKudosCount(Integer kudosCount) {
@@ -969,7 +970,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número de comentarios
+     *   Obtiene el número de comentarios
      * @return El número de comentarios
      */
     public Integer getCommentCount() {
@@ -977,7 +978,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número de comentarios
+     *   Establece el número de comentarios
      * @param commentCount El nuevo número de comentarios
      */
     public void setCommentCount(Integer commentCount) {
@@ -985,7 +986,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número de atletas en la actividad
+     *   Obtiene el número de atletas en la actividad
      * @return El número de atletas
      */
     public Integer getAthleteCount() {
@@ -993,7 +994,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número de atletas en la actividad
+     *   Establece el número de atletas en la actividad
      * @param athleteCount El nuevo número de atletas
      */
     public void setAthleteCount(Integer athleteCount) {
@@ -1001,7 +1002,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número de fotos
+     *   Obtiene el número de fotos
      * @return El número de fotos
      */
     public Integer getPhotoCount() {
@@ -1009,7 +1010,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número de fotos
+     *   Establece el número de fotos
      * @param photoCount El nuevo número de fotos
      */
     public void setPhotoCount(Integer photoCount) {
@@ -1017,7 +1018,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número total de fotos (incluyendo externas)
+     *   Obtiene el número total de fotos (incluyendo externas)
      * @return El número total de fotos
      */
     public Integer getTotalPhotoCount() {
@@ -1025,7 +1026,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número total de fotos
+     *   Establece el número total de fotos
      * @param totalPhotoCount El nuevo número total de fotos
      */
     public void setTotalPhotoCount(Integer totalPhotoCount) {
@@ -1033,7 +1034,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el número de Récords Personales (PR)
+     *   Obtiene el número de Récords Personales (PR)
      * @return El número de PRs
      */
     public Integer getPrCount() {
@@ -1041,7 +1042,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el número de Récords Personales (PR)
+     *   Establece el número de Récords Personales (PR)
      * @param prCount El nuevo número de PRs
      */
     public void setPrCount(Integer prCount) {
@@ -1049,7 +1050,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el ID del equipamiento
+     * Obtiene el ID del equipamiento
      * @return El ID del equipamiento
      */
     public String getGearId() {
@@ -1057,7 +1058,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el ID del equipamiento
+     * Establece el ID del equipamiento
      * @param gearId El nuevo ID del equipamiento
      */
     public void setGearId(String gearId) {
@@ -1065,7 +1066,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el tipo de entrenamiento
+     * Obtiene el tipo de entrenamiento
      * @return El código del tipo de entrenamiento
      */
     public Integer getWorkoutType() {
@@ -1073,7 +1074,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el tipo de entrenamiento
+     * Establece el tipo de entrenamiento
      * @param workoutType El nuevo código del tipo de entrenamiento
      */
     public void setWorkoutType(Integer workoutType) {
@@ -1081,7 +1082,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el nombre del dispositivo
+     * Obtiene el nombre del dispositivo
      * @return El nombre del dispositivo
      */
     public String getDeviceName() {
@@ -1089,7 +1090,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el nombre del dispositivo
+     *  Establece el nombre del dispositivo
      * @param deviceName El nuevo nombre del dispositivo
      */
     public void setDeviceName(String deviceName) {
@@ -1097,7 +1098,7 @@ public class Activity {
     }
     
     /**
-     * @brief Obtiene el token de incrustación (embed)
+     * Obtiene el token de incrustación (embed)
      * @return El token
      */
     public String getEmbedToken() {
@@ -1105,7 +1106,7 @@ public class Activity {
     }
     
     /**
-     * @brief Establece el token de incrustación (embed)
+     * Establece el token de incrustación (embed)
      * @param embedToken El nuevo token
      */
     public void setEmbedToken(String embedToken) {
@@ -1115,8 +1116,8 @@ public class Activity {
     // Métodos de utilidad
     
     /**
-     * @brief Calcula la distancia en kilómetros
-     * @details Convierte la distancia (almacenada en metros) a kilómetros.
+     * Calcula la distancia en kilómetros
+     * Convierte la distancia (almacenada en metros) a kilómetros.
      * @return La distancia en km, o null si la distancia no está definida.
      */
     public Float getDistanceInKm() {
@@ -1124,8 +1125,8 @@ public class Activity {
     }
     
     /**
-     * @brief Calcula el tiempo transcurrido en minutos
-     * @details Convierte el tiempo transcurrido (almacenado en segundos) a minutos.
+     * Calcula el tiempo transcurrido en minutos
+     * Convierte el tiempo transcurrido (almacenado en segundos) a minutos.
      * @return El tiempo transcurrido en minutos, o null si no está definido.
      */
     public Integer getElapsedTimeInMinutes() {
@@ -1133,8 +1134,6 @@ public class Activity {
     }
     
     /**
-     * @brief Calcula el tiempo en movimiento en minutos
-     * @details Convierte el tiempo en movimiento (almacenado en segundos) a minutos.
      * @return El tiempo en movimiento en minutos, o null si no está definido.
      */
     public Integer getMovingTimeInMinutes() {
@@ -1142,8 +1141,6 @@ public class Activity {
     }
     
     /**
-     * @brief Calcula la velocidad media en km/h
-     * @details Convierte la velocidad media (almacenada en m/s) a km/h.
      * @return La velocidad media en km/h, o null si no está definida.
      */
     public Float getAverageSpeedKmh() {
@@ -1151,8 +1148,6 @@ public class Activity {
     }
     
     /**
-     * @brief Calcula la velocidad máxima en km/h
-     * @details Convierte la velocidad máxima (almacenada en m/s) a km/h.
      * @return La velocidad máxima en km/h, o null si no está definida.
      */
     public Float getMaxSpeedKmh() {
@@ -1160,8 +1155,6 @@ public class Activity {
     }
     
     /**
-     * @brief Genera una representación en String de la actividad.
-     * @details Muestra un resumen de los campos más importantes de la actividad
      * (ID, nombre, tipo, distancia, tiempo, fecha).
      * @return Un String formateado con información de la actividad.
      */
