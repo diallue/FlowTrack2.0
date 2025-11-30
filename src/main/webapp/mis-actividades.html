@@ -3,35 +3,47 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Título de la página -->
   <title>FlowTrack — Mis actividades (Strava)</title>
 
-  <!-- CSS -->
+  <!-- CSS principal para esta vista -->
   <link rel="stylesheet" href="./css/mis-actividades.css" />
 
-  <!-- Leaflet (mapas) -->
+  <!-- Dependencias externas para mapas y gráficos (aunque Chart.js está listado dos veces) -->
+  
+  <!-- Leaflet CSS para mapas interactivos -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-  <!-- Chart.js -->
+  <!-- Carga duplicada de scripts de Leaflet, solo se necesita una vez -->
+  <!-- Script de Leaflet (redundante, el siguiente lo cubre) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Leaflet -->
+  <!-- Script de Leaflet con integrity hash para seguridad -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-Vx2bNI1z0sWbGfIZu6p+v8hba8yV3px6b6Xk9N3m0mM=" crossorigin=""></script>
+          
+  <!-- Nota: La librería Chart.js se menciona en un comentario pero no está enlazada aquí. -->
+
 </head>
 <body class="activities-page">
 
+  <!-- Cabecera superior de la aplicación -->
   <header class="topbar">
     <div class="brand">FlowTrack</div>
     <div class="actions">
+      <!-- Botones de acción con IDs para JS -->
       <button id="refresh-all" title="Refrescar actividades">🔄</button>
       <button id="logout" title="Cerrar sesión">Cerrar sesión</button>
     </div>
   </header>
 
+  <!-- Contenido principal de la página, dividido en barra lateral y área de contenido -->
   <main class="main">
+    <!-- Barra lateral con controles de filtro -->
     <aside class="sidebar">
       <h2>Filtros</h2>
 
+      <!-- Controles de formulario con IDs únicos para acceso desde JavaScript -->
       <label>
         Tipo
         <select id="filter-type">
@@ -63,6 +75,7 @@
         <input type="search" id="filter-search" placeholder="p.ej. salida fin de semana" />
       </label>
 
+      <!-- Botones para aplicar y limpiar filtros -->
       <div class="sidebar-row">
         <button id="apply-filters">Aplicar</button>
         <button id="clear-filters" class="ghost">Limpiar</button>
@@ -70,21 +83,26 @@
 
       <hr/>
 
+      <!-- Información de estado de la carga de datos -->
       <div class="meta">
         <small id="total-activities">Actividades: —</small>
         <small id="loaded-page">Página: —</small>
       </div>
 
+      <!-- Botón de exportación -->
       <div class="sidebar-row">
         <button id="export-csv">Exportar CSV (cargadas)</button>
       </div>
     </aside>
 
+    <!-- Sección principal donde se muestran las actividades -->
     <section class="content">
+      <!-- Contenedor donde JavaScript insertará dinámicamente las tarjetas de actividad -->
       <div id="activities" class="activities-grid">
         <!-- tarjetas insertadas por JS -->
       </div>
 
+      <!-- Área de controles de paginación/carga -->
       <div id="list-status" class="list-status">
         <button id="load-more" class="btn">Cargar más</button>
         <div id="loading-indicator" class="loading hidden">Cargando...</div>
@@ -93,10 +111,12 @@
     </section>
   </main>
 
+  <!-- Pie de página simple -->
   <footer class="footer">
     <small>FlowTrack — Datos provistos por Strava</small>
   </footer>
 
+  <!-- Script JavaScript principal para esta página. El atributo 'type="module"' permite usar import/export. -->
   <script src="./js/mis-actividades.js" type="module"></script>
 </body>
 </html>

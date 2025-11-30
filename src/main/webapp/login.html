@@ -1,21 +1,31 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Define la codificación de caracteres como UTF-8 -->
     <meta charset="UTF-8">
+    <!-- Configura la vista para dispositivos móviles, asegurando una escala inicial correcta -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Título de la página que aparece en la pestaña del navegador -->
     <title>FlowTrack | Login</title>
+    <!-- Enlaza el archivo de estilos CSS específico para la página de login -->
     <link rel="stylesheet" href="./styleLogin.css">
 </head>
+<!-- Aplica una clase CSS al cuerpo de la página para estilizar el fondo u otros elementos de la página de login -->
 <body class="login-page">
+    <!-- Contenedor principal que centra el contenido de login -->
     <div class="container">
+        <!-- Logotipo de la aplicación FlowTrack -->
         <img src="./img/FlowTractLogoSinFondo.png" alt="Logotipo de Strava" width="250">
+        <!-- Descripción de la funcionalidad de la aplicación -->
         <p>Conecta tu cuenta de Strava para analizar tu rendimiento.</p>
 
+        <!-- Botón principal de login. Tiene un ID para que el JavaScript pueda añadirle un listener de evento. -->
         <button id="login-strava" class="btn-strava">
             Conectar con Strava
         </button>
     </div>
 
+    <!-- Enlaza el script JavaScript que gestiona la lógica del login y la redirección a Strava -->
     <script src="./login.js"></script>
 </body>
 </html>
