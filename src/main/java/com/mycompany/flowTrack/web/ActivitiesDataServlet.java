@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.mycompany.flowTrack.model.Activity;
 import com.mycompany.flowTrack.model.User;
 import com.mycompany.flowTrack.service.StravaService;
+import com.mycompany.flowTrack.util.Config;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -36,8 +37,15 @@ public class ActivitiesDataServlet extends HttpServlet {
      */
     @Override
     public void init() throws ServletException {
+        String stravaId = Config.get("strava.client.id");
+        String stravaSecret = Config.get("strava.client.secret");
+        
+        if (stravaId == null || stravaSecret == null) {
+            throw new ServletException("Faltan credenciales de Strava en config.properties");
+        }
+        
         // Inicializa el servicio de Strava con credenciales (estas deberían cargarse de forma segura, no hardcodeadas).
-        this.stravaService = new StravaService("CLIENT_ID", "CLIENT_SECRET");
+        this.stravaService = new StravaService(stravaId, stravaSecret);
         // Inicializa y configura el ObjectMapper de Jackson.
         this.objectMapper = new ObjectMapper();
         // Ignora propiedades desconocidas en el JSON de respuesta de Strava durante la deserialización.

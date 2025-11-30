@@ -9,6 +9,7 @@ import com.mycompany.flowTrack.model.AnalysisResults; // Importa el modelo para 
 import com.mycompany.flowTrack.model.User;
 import com.mycompany.flowTrack.service.CyclingAnalyticsService; // Importa el servicio de Cycling Analytics
 import com.mycompany.flowTrack.service.StravaService;
+import com.mycompany.flowTrack.util.Config;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -33,9 +34,19 @@ public class ActivityDetailApiServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        // Inicialización de servicios con credenciales (pendientes de mover a config segura).
-        this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
-        this.analyticsService = new CyclingAnalyticsService("JbA27F9J6kcHOpHSfpCY8jcGDqDQoS7U"); 
+        // 1. LEER CREDENCIALES DEL ARCHIVO DE CONFIGURACIÓN
+        String stravaId = Config.get("strava.client.id");
+        String stravaSecret = Config.get("strava.client.secret");
+        String caToken = Config.get("cycling.analytics.token");
+        
+        // Verificación de seguridad: Si no están, lanzamos error para que te des cuenta rápido
+        if (stravaId == null || stravaSecret == null || caToken == null) {
+            throw new ServletException("¡ERROR! Faltan credenciales en config.properties. Revisa que el archivo exista en src/main/resources.");
+        }
+
+        // 2. INICIALIZAR SERVICIOS CON LAS VARIABLES
+        this.stravaService = new StravaService(stravaId, stravaSecret);
+        this.analyticsService = new CyclingAnalyticsService(caToken);
         
         // Configuración del ObjectMapper de Jackson para manejo de JSON.
         this.objectMapper = new ObjectMapper()

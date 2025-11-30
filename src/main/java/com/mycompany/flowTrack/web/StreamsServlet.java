@@ -2,6 +2,7 @@ package com.mycompany.flowTrack.web;
 
 import com.mycompany.flowTrack.model.User;
 import com.mycompany.flowTrack.service.StravaService;
+import com.mycompany.flowTrack.util.Config;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -26,8 +27,14 @@ public class StreamsServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         // Inicializa el servicio con las credenciales de la aplicación Strava.
-        // (Nota: Estas credenciales deberían gestionarse de forma más segura en un entorno de producción).
-        this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
+        String clientId = Config.get("strava.client.id");
+        String clientSecret = Config.get("strava.client.secret");
+
+        if (clientId == null || clientSecret == null) {
+            throw new ServletException("Faltan credenciales en config.properties");
+        }
+        
+        this.stravaService = new StravaService(clientId, clientSecret);
     }
 
     /**

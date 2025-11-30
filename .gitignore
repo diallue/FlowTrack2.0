@@ -1,1 +1,3 @@
 /target/
+# Ignorar archivo de configuración con claves secretas
+src/main/resources/config.properties

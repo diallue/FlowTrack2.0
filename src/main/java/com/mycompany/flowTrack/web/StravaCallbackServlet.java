@@ -5,6 +5,7 @@ import com.mycompany.flowTrack.model.Athletes;
 import com.mycompany.flowTrack.model.User;
 import com.mycompany.flowTrack.service.StravaService;
 import com.mycompany.flowTrack.service.StravaService.TokenResponse;
+import com.mycompany.flowTrack.util.Config;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -20,10 +21,6 @@ import java.time.LocalDateTime;
  */
 @WebServlet("/exchange_token")
 public class StravaCallbackServlet extends HttpServlet {
-
-    // Credenciales de la aplicación Strava.
-    private final String STRAVA_CLIENT_ID = "177549";
-    private final String STRAVA_CLIENT_SECRET = "17af0ae01a69783ef0981bcea389625c3300803e";
     
     private ObjectMapper objectMapper;
     private StravaService stravaService;
@@ -34,7 +31,14 @@ public class StravaCallbackServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         this.objectMapper = new ObjectMapper();
-        this.stravaService = new StravaService(STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET);
+        String clientId = Config.get("strava.client.id");
+        String clientSecret = Config.get("strava.client.secret");
+
+        if (clientId == null || clientSecret == null) {
+            throw new ServletException("Faltan credenciales en config.properties");
+        }
+
+        this.stravaService = new StravaService(clientId, clientSecret);
         // Configura Jackson para no usar timestamps numéricos en fechas.
         this.objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
