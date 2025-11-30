@@ -242,10 +242,118 @@ function renderChart(canvasId, labels, data, label, color, fill = false) {
     new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: {
-            // El resto de la configuración de Chart.js sigue aquí...
+            labels: labels, 
+            datasets: [{
+                label: label,
+                data: data,
+                borderColor: color,
+                backgroundColor: color + '20',
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                fill: fill,
+                tension: 0.2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } } },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
         }
     });
 }
 
-// Nota: Las funciones `renderZonesChart`, `renderGradientZones`, `showErrorState` y el resto de la configuración de Chart.js 
-// no estaban incluidas en el snippet final del usuario, pero se asume que existen en el archivo original.
+function renderZonesChart(hrData) {
+    if (!hrData || !Array.isArray(hrData)) return;
+    const zones = [0, 0, 0, 0, 0];
+    let totalPoints = 0;
+    
+    hrData.forEach(bpm => {
+        if(bpm > 0) { 
+            totalPoints++;
+            if (bpm < 125) zones[0]++;
+            else if (bpm < 145) zones[1]++;
+            else if (bpm < 165) zones[2]++;
+            else if (bpm < 180) zones[3]++;
+            else zones[4]++;
+        }
+    });
+
+    if (totalPoints === 0) return;
+    const percentages = zones.map(count => ((count / totalPoints) * 100).toFixed(1));
+
+    new Chart(document.getElementById('zones-chart'), {
+        type: 'bar',
+        data: {
+            labels: ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'],
+            datasets: [{ data: percentages, backgroundColor: ['#A0A0A0', '#3498db', '#2ecc71', '#f1c40f', '#e74c3c'], borderRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { display: false }, x: { ticks: { color: '#ccc' }, grid: { display: false } } }
+        }
+    });
+}
+
+function showErrorState(message) {
+    document.getElementById('act-title').textContent = "Error";
+    document.getElementById('act-meta').innerHTML = `<span style="color:#ff5a5a;">${message}</span>`;
+}
+
+function renderGradientZones(gradeData) {
+    if (!Array.isArray(gradeData) || gradeData.length === 0) return;
+
+    // Categorías de terreno
+    // 0: Bajada (< -1%)
+    // 1: Llano (-1% a 2%)
+    // 2: Falso Llano/Subida (2% a 5%)
+    // 3: Subida (5% a 8%)
+    // 4: Muro (> 8%)
+    const zones = [0, 0, 0, 0, 0];
+    let totalPoints = 0;
+
+    gradeData.forEach(g => {
+        totalPoints++;
+        if (g < -1) zones[0]++;
+        else if (g < 2) zones[1]++;
+        else if (g < 5) zones[2]++;
+        else if (g < 8) zones[3]++;
+        else zones[4]++;
+    });
+
+    const percentages = zones.map(count => ((count / totalPoints) * 100).toFixed(1));
+
+    new Chart(document.getElementById('gradient-chart'), {
+        type: 'bar',
+        data: {
+            labels: ['Bajada', 'Llano', '2-5%', '5-8%', '>8%'],
+            datasets: [{
+                data: percentages,
+                backgroundColor: [
+                    '#00C49F', // Bajada (Verde agua)
+                    '#A0A0A0', // Llano (Gris)
+                    '#f1c40f', // Amarillo
+                    '#e67e22', // Naranja
+                    '#e74c3c'  // Rojo (Duro)
+                ],
+                borderRadius: 4,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { callbacks: { label: (c) => `${c.raw}% del recorrido` } } 
+            },
+            scales: {
+                y: { display: false },
+                x: { ticks: { color: '#ccc', font: { size: 11 } }, grid: { display: false } }
+            }
+        }
+    });
+}

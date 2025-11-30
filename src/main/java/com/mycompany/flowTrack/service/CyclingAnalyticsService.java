@@ -234,11 +234,38 @@ public class CyclingAnalyticsService {
         String crlf = "\r\n"; // El estándar HTTP requiere CRLF (retorno de carro + salto de línea)
         builder.append("--").append(boundary).append(crlf);
         // Define la disposición del contenido como un archivo con un nombre específico.
-        builder.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(filename).append("\"").append(crlf);
+        builder.append("Content-Disposition: form-data; name=\"data\"; filename=\"").append(filename).append("\"").append(crlf);
         builder.append("Content-Type: text/csv").append(crlf); // Indica el tipo de contenido que se envía.
         builder.append(crlf); // Línea vacía requerida antes del contenido real del archivo.
         builder.append(csvContent).append(crlf);
+        builder.append("--").append(boundary).append(crlf);
+        builder.append("Content-Disposition: form-data; name=\"format\"").append(crlf).append(crlf);
+        builder.append("csv").append(crlf);
         builder.append("--").append(boundary).append("--").append(crlf); // Marcador de cierre de la petición.
         return builder.toString();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
