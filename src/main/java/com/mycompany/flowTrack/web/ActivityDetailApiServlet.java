@@ -31,7 +31,7 @@ public class ActivityDetailApiServlet extends HttpServlet {
         // RECUERDA: Mover credenciales a configuración
         this.stravaService = new StravaService("177549", "17af0ae01a69783ef0981bcea389625c3300803e");
         // RECUERDA: Usar tu token real de Cycling Analytics
-        this.analyticsService = new CyclingAnalyticsService("TU_CYCLING_ANALYTICS_TOKEN_AQUI"); 
+        this.analyticsService = new CyclingAnalyticsService("JbA27F9J6kcHOpHSfpCY8jcGDqDQoS7U"); 
         
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -69,7 +69,7 @@ public class ActivityDetailApiServlet extends HttpServlet {
             Activity activityStrava = stravaService.getActivity(stravaToken, activityId);
 
             // 2. Obtener Streams (Raw JSON String para pasarlo al conversor)
-            String streamsKeys = "time,latlng,cadence,watts,heartrate,velocity_smooth";
+            String streamsKeys = "time,latlng,cadence,watts,heartrate,velocity_smooth,altitude,grade_smooth";
             // IMPORTANTE: Guardamos el JSON crudo en un String
             String streamsJsonRaw = stravaService.getActivityStreams(stravaToken, activityId, streamsKeys, true);
             

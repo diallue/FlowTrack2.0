@@ -1,4 +1,4 @@
-// webapp/js/actividad.js
+// webapp/js/actividad.js - VERSIÓN CORREGIDA FINAL
 
 document.addEventListener('DOMContentLoaded', async () => {
     const params = new URLSearchParams(window.location.search);
@@ -14,58 +14,138 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (response.status === 401) { window.location.href = 'login.html'; return; }
         if (!response.ok) throw new Error(`Error del servidor (${response.status})`);
         
-        const data = await response.json(); // { strava_activity, analytics, streams }
+        const data = await response.json(); 
         
         if (!data.strava_activity) throw new Error("Datos incompletos");
 
-        // 1. Cabecera y Métricas Ampliadas
-        renderHeader(data.strava_activity);
-        renderMetrics(data.analytics, data.strava_activity);
-        
-        // 2. Extraer Streams
+        // --- 1. EXTRACCIÓN DE DATOS (IMPORTANTE: HACER ESTO PRIMERO) ---
         const streams = data.streams || {};
+        
+        // Extraemos los arrays limpios de datos
         const timeData = extractStreamData(streams.time);
         const latlngData = extractStreamData(streams.latlng);
-        
-        // Datos para gráficas
         const altData = extractStreamData(streams.altitude);
         const speedData = extractStreamData(streams.velocity_smooth);
         const hrData = extractStreamData(streams.heartrate);
         const cadData = extractStreamData(streams.cadence);
+        const gradeData = extractStreamData(streams.grade_smooth);
 
-        // 3. Renderizar Mapa y Gráficos (Sin Potencia)
+        // --- 2. RENDERIZADO DE PANELES ---
+        
+        // Cabecera
+        renderHeader(data.strava_activity);
+        
+        // Métricas: Pasamos 'hrData' (el array) para poder calcular si la API falla
+        renderMetrics(data.analytics, data.strava_activity, hrData);
+        
+        // Mapa
         renderMap(latlngData);
 
-        // Eje X (Tiempo)
+        // --- 3. RENDERIZADO DE GRÁFICAS ---
+        // Usamos timeData como eje X
         const xAxis = timeData;
 
         renderChart('chart-elevation', xAxis, altData, 'Elevación (m)', '#8884d8', true);
-        
-        // Velocidad (convertir m/s a km/h)
         renderChart('chart-speed', xAxis, speedData ? speedData.map(v => v * 3.6) : null, 'Velocidad (km/h)', '#00C49F');
-        
-        // Frecuencia Cardíaca
         renderChart('chart-hr', xAxis, hrData, 'Frecuencia Cardíaca (bpm)', '#FF5A5A');
-        
-        // Cadencia
         renderChart('chart-cadence', xAxis, cadData, 'Cadencia (rpm)', '#00d2ff');
 
-        // 4. Análisis de Zonas (Solo si hay pulso)
+        // Zonas de Pulso
         if (hrData && hrData.length > 0) {
             renderZonesChart(hrData);
         } else {
-            // Ocultar panel de zonas si no hay datos de pulso
-            const zonePanel = document.querySelector('.zones-panel');
-            if(zonePanel) zonePanel.style.display = 'none';
+            const zp = document.querySelector('.zones-panel');
+            if(zp) zp.style.display = 'none';
+        }
+        
+        if (gradeData && gradeData.length > 0) {
+            renderGradientZones(gradeData);
         }
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error JS:", error);
         showErrorState(error.message);
     }
 });
 
-// --- Funciones Auxiliares ---
+// --- Funciones de Lógica y Renderizado ---
+
+function renderMetrics(analytics, stravaData, hrArray) {
+    const container = document.getElementById('metrics-container');
+    container.innerHTML = '';
+    
+    // --- 1. CÁLCULO DE TRIMP (Carga) ---
+    let trimpValue = analytics?.trimp || analytics?.load;
+    let trimpLabel = "(API)";
+    if (!trimpValue || trimpValue === 0) {
+        // CORRECCIÓN: Comprobamos si hrArray existe y es un array antes de usarlo
+        if (hrArray && Array.isArray(hrArray) && hrArray.length > 0) {
+            trimpValue = calculateEdwardsTRIMP(hrArray, stravaData.max_heartrate);
+            trimpLabel = ""; // Calculado local
+        }
+    }
+    
+    // --- 2. DISPOSITIVO ---
+    const deviceName = stravaData.device_name || "Strava App / Desconocido";
+
+    // LISTA DE MÉTRICAS
+    const metrics = [
+        { l: `Carga (TRIMP) ${trimpLabel}`, v: trimpValue ? Math.round(trimpValue) : '—', u: '', highlight: true },
+        { l: 'Potencia Norm.', v: analytics?.epower || analytics?.weighted_power, u: 'W' },
+        { l: 'Pulso Medio', v: stravaData.average_heartrate, u: 'bpm' },
+        { l: 'Pulso Máx', v: stravaData.max_heartrate, u: 'bpm' },
+        { l: 'Vel. Media', v: stravaData.average_speed ? (stravaData.average_speed*3.6).toFixed(1) : null, u: 'km/h' },
+        { l: 'Vel. Máxima', v: stravaData.max_speed ? (stravaData.max_speed*3.6).toFixed(1) : null, u: 'km/h' },
+        { l: 'Cadencia', v: stravaData.average_cadence, u: 'rpm' },
+        { l: 'Calorías', v: stravaData.calories, u: 'kcal' },
+        { l: 'Desnivel +', v: stravaData.total_elevation_gain, u: 'm' },
+        { l: 'Temp. Media', v: stravaData.average_temp, u: '°C' },
+        { l: 'Dispositivo', v: deviceName, u: '', small: true }
+    ];
+
+    metrics.forEach(m => {
+        if (m.v !== null && m.v !== undefined && m.v !== '—') {
+            const styleClass = m.highlight ? 'metric-value highlight' : 'metric-value';
+            const smallClass = m.small ? 'metric-card small-text' : 'metric-card';
+            // Formateo especial para Intensidad (siempre 2 decimales)
+            const valFormatted = m.isDecimal ? formatNumber(m.v, 2) : m.v;
+
+            container.innerHTML += `
+                <div class="${smallClass}">
+                    <span class="metric-label">${m.l}</span>
+                    <span class="${styleClass}">${valFormatted}</span>
+                    <span class="metric-unit">${m.u}</span>
+                </div>`;
+        }
+    });
+}
+
+// Cálculo del TRIMP de Edwards (Respaldo robusto)
+function calculateEdwardsTRIMP(hrData, maxHr) {
+    if (!Array.isArray(hrData) || hrData.length === 0) return 0;
+    
+    // Si no hay MaxHR en Strava, usamos 190 como estándar seguro
+    const max = maxHr || 190; 
+    let trimp = 0;
+
+    hrData.forEach(bpm => {
+        if (bpm > 0) { // Ignorar ceros
+            const percent = bpm / max;
+            let factor = 0;
+            if (percent >= 0.5 && percent < 0.6) factor = 1;
+            else if (percent >= 0.6 && percent < 0.7) factor = 2;
+            else if (percent >= 0.7 && percent < 0.8) factor = 3;
+            else if (percent >= 0.8 && percent < 0.9) factor = 4;
+            else if (percent >= 0.9) factor = 5;
+            
+            // Sumamos (factor * minutos). Como el dato es por segundo, dividimos por 60.
+            trimp += (factor / 60);
+        }
+    });
+    return trimp;
+}
+
+// --- Helpers Genéricos ---
 
 function extractStreamData(streamObj) {
     if (!streamObj) return null;
@@ -85,99 +165,32 @@ function formatTime(seconds) {
     return `${h > 0 ? h + 'h ' : ''}${m}m`;
 }
 
-function showErrorState(message) {
-    document.getElementById('act-title').textContent = "Error";
-    document.getElementById('act-meta').innerHTML = `<span style="color:#ff5a5a;">${message}</span>`;
-}
-
-// --- Renderizado ---
-
 function renderHeader(stravaData) {
-    document.getElementById('act-title').textContent = stravaData.name || "Actividad sin título";
+    document.getElementById('act-title').textContent = stravaData.name || "Actividad";
     const date = new Date(stravaData.start_date_local).toLocaleDateString();
-    // Icono según tipo de deporte
     let icon = '🚴';
     if (stravaData.type === 'Run') icon = '🏃';
-    if (stravaData.type === 'Swim') icon = '🏊';
+    else if (stravaData.type === 'Swim') icon = '🏊';
     
     document.getElementById('act-meta').innerHTML = `${icon} ${stravaData.type} • 📅 ${date} • 📏 ${(stravaData.distance/1000).toFixed(2)} km • ⏱️ ${formatTime(stravaData.moving_time)}`;
 }
 
-function renderMetrics(analytics, stravaData) {
-    const container = document.getElementById('metrics-container');
-    container.innerHTML = '';
-    
-    // Lista completa de métricas para mostrar
-    // Priorizamos TRIMP y HR Load de Cycling Analytics si no hay potencia
-    const metrics = [
-        // 1. Esfuerzo y Carga (Cycling Analytics)
-        { l: 'Carga (TRIMP)', v: analytics?.trimp || analytics?.load, u: '', highlight: true }, 
-        { l: 'Intensidad', v: analytics?.intensity ? formatNumber(analytics.intensity, 2) : null, u: '' },
-        
-        // 2. Datos Cardíacos (Strava)
-        { l: 'Pulso Medio', v: stravaData.average_heartrate, u: 'bpm' },
-        { l: 'Pulso Máx', v: stravaData.max_heartrate, u: 'bpm' },
-        
-        // 3. Velocidad y Ritmo
-        { l: 'Vel. Media', v: stravaData.average_speed ? (stravaData.average_speed*3.6).toFixed(1) : null, u: 'km/h' },
-        { l: 'Vel. Máxima', v: stravaData.max_speed ? (stravaData.max_speed*3.6).toFixed(1) : null, u: 'km/h' },
-        
-        // 4. Cadencia
-        { l: 'Cadencia Med.', v: stravaData.average_cadence, u: 'rpm' },
-        
-        // 5. Energía y Entorno
-        { l: 'Calorías', v: stravaData.calories, u: 'kcal' },
-        { l: 'Desnivel +', v: stravaData.total_elevation_gain, u: 'm' },
-        { l: 'Temp. Media', v: stravaData.average_temp, u: '°C' },
-        
-        // 6. Otros
-        { l: 'Dispositivo', v: stravaData.device_name, u: '', small: true }
-    ];
-
-    metrics.forEach(m => {
-        // Solo mostramos si el valor existe (no es null ni undefined)
-        if (m.v !== null && m.v !== undefined && m.v !== '—') {
-            const styleClass = m.highlight ? 'metric-value highlight' : 'metric-value';
-            const smallClass = m.small ? 'metric-card small-text' : 'metric-card';
-            
-            container.innerHTML += `
-                <div class="${smallClass}">
-                    <span class="metric-label">${m.l}</span>
-                    <span class="${styleClass}">${m.v}</span>
-                    <span class="metric-unit">${m.u}</span>
-                </div>`;
-        }
-    });
-}
-
 function renderMap(latlngs) {
     const el = document.getElementById('map-detail');
-    if (!latlngs || latlngs.length === 0) { el.innerHTML = "<p style='text-align:center;padding:20px;color:#666'>Sin datos GPS</p>"; return; }
-    
-    // Limpiamos mapa previo si existe (importante en SPAs, aunque aquí recargamos página)
-    if (el._leaflet_id) { el.innerHTML = ''; }
+    if (!latlngs || latlngs.length === 0) { el.innerHTML = "<p style='text-align:center;color:#666;padding:20px'>Sin GPS</p>"; return; }
+    if (el._leaflet_id) { el.innerHTML = ''; } // Limpieza básica
 
     const map = L.map(el).setView(latlngs[0], 13);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
-        attribution: '©OpenStreetMap',
-        maxZoom: 19
-    }).addTo(map);
-    
-    const poly = L.polyline(latlngs, { color: '#00ff88', weight: 4, opacity: 0.8 }).addTo(map);
-    
-    // Marcadores inicio/fin
-    L.circleMarker(latlngs[0], {color: '#00ff88', radius: 5, fillOpacity:1}).addTo(map).bindPopup("Inicio");
-    L.circleMarker(latlngs[latlngs.length-1], {color: '#ff5a5a', radius: 5, fillOpacity:1}).addTo(map).bindPopup("Fin");
-
-    map.fitBounds(poly.getBounds(), { padding: [30, 30] });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '©OpenStreetMap' }).addTo(map);
+    const poly = L.polyline(latlngs, { color: '#00ff88', weight: 4 }).addTo(map);
+    map.fitBounds(poly.getBounds(), { padding: [20, 20] });
 }
 
 function renderChart(canvasId, labels, data, label, color, fill = false) {
     const canvas = document.getElementById(canvasId);
-    if (!canvas) return; // Si quitaste el canvas del HTML
+    if (!canvas) return;
     
     if (!data || data.length === 0) {
-        // Ocultamos el panel entero si no hay datos para esa gráfica
         const panel = canvas.closest('.chart-panel');
         if(panel) panel.style.display = 'none';
         return;
@@ -191,50 +204,31 @@ function renderChart(canvasId, labels, data, label, color, fill = false) {
                 label: label,
                 data: data,
                 borderColor: color,
-                backgroundColor: color + '20', // 20 = Transparencia hex
+                backgroundColor: color + '20',
                 borderWidth: 2,
-                pointRadius: 0, // Sin puntos para mejor rendimiento
+                pointRadius: 0,
                 pointHoverRadius: 4,
                 fill: fill,
-                tension: 0.2 // Curva suave
+                tension: 0.2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { 
-                legend: { display: false },
-                tooltip: { 
-                    mode: 'index', 
-                    intersect: false,
-                    backgroundColor: 'rgba(15, 23, 36, 0.9)',
-                    titleColor: color,
-                    bodyColor: '#fff',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1
-                } 
-            },
-            scales: {
-                x: { display: false }, 
-                y: { 
-                    grid: { color: 'rgba(255,255,255,0.05)' }, 
-                    ticks: { color: '#888', font: {size: 10} } 
-                }
-            },
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } } },
             interaction: { mode: 'nearest', axis: 'x', intersect: false }
         }
     });
 }
 
 function renderZonesChart(hrData) {
-    // Calculamos zonas básicas (estimación estándar)
-    // Z1: <125, Z2: 125-145, Z3: 145-165, Z4: 165-180, Z5: >180
-    // Idealmente estas zonas deberían venir del perfil del usuario
+    if (!hrData || !Array.isArray(hrData)) return;
     const zones = [0, 0, 0, 0, 0];
     let totalPoints = 0;
     
     hrData.forEach(bpm => {
-        if(bpm > 0) { // Ignorar ceros
+        if(bpm > 0) { 
             totalPoints++;
             if (bpm < 125) zones[0]++;
             else if (bpm < 145) zones[1]++;
@@ -245,21 +239,62 @@ function renderZonesChart(hrData) {
     });
 
     if (totalPoints === 0) return;
-
     const percentages = zones.map(count => ((count / totalPoints) * 100).toFixed(1));
 
     new Chart(document.getElementById('zones-chart'), {
         type: 'bar',
         data: {
-            labels: ['Z1 Recup', 'Z2 Fondo', 'Z3 Tempo', 'Z4 Umbral', 'Z5 Anaer'],
+            labels: ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'],
+            datasets: [{ data: percentages, backgroundColor: ['#A0A0A0', '#3498db', '#2ecc71', '#f1c40f', '#e74c3c'], borderRadius: 4 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { display: false }, x: { ticks: { color: '#ccc' }, grid: { display: false } } }
+        }
+    });
+}
+
+function showErrorState(message) {
+    document.getElementById('act-title').textContent = "Error";
+    document.getElementById('act-meta').innerHTML = `<span style="color:#ff5a5a;">${message}</span>`;
+}
+
+function renderGradientZones(gradeData) {
+    if (!Array.isArray(gradeData) || gradeData.length === 0) return;
+
+    // Categorías de terreno
+    // 0: Bajada (< -1%)
+    // 1: Llano (-1% a 2%)
+    // 2: Falso Llano/Subida (2% a 5%)
+    // 3: Subida (5% a 8%)
+    // 4: Muro (> 8%)
+    const zones = [0, 0, 0, 0, 0];
+    let totalPoints = 0;
+
+    gradeData.forEach(g => {
+        totalPoints++;
+        if (g < -1) zones[0]++;
+        else if (g < 2) zones[1]++;
+        else if (g < 5) zones[2]++;
+        else if (g < 8) zones[3]++;
+        else zones[4]++;
+    });
+
+    const percentages = zones.map(count => ((count / totalPoints) * 100).toFixed(1));
+
+    new Chart(document.getElementById('gradient-chart'), {
+        type: 'bar',
+        data: {
+            labels: ['Bajada', 'Llano', '2-5%', '5-8%', '>8%'],
             datasets: [{
                 data: percentages,
                 backgroundColor: [
-                    '#A0A0A0', // Gris
-                    '#3498db', // Azul
-                    '#2ecc71', // Verde
+                    '#00C49F', // Bajada (Verde agua)
+                    '#A0A0A0', // Llano (Gris)
                     '#f1c40f', // Amarillo
-                    '#e74c3c'  // Rojo
+                    '#e67e22', // Naranja
+                    '#e74c3c'  // Rojo (Duro)
                 ],
                 borderRadius: 4,
                 borderSkipped: false
@@ -270,16 +305,11 @@ function renderZonesChart(hrData) {
             maintainAspectRatio: false,
             plugins: { 
                 legend: { display: false }, 
-                tooltip: { 
-                    callbacks: { label: (c) => `${c.raw}% del tiempo` } 
-                } 
+                tooltip: { callbacks: { label: (c) => `${c.raw}% del recorrido` } } 
             },
             scales: {
-                y: { display: false, grid: {display: false} },
-                x: { 
-                    ticks: { color: '#ccc', font: { size: 11 } }, 
-                    grid: { display: false } 
-                }
+                y: { display: false },
+                x: { ticks: { color: '#ccc', font: { size: 11 } }, grid: { display: false } }
             }
         }
     });
