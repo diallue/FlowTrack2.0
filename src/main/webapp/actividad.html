@@ -1,48 +1,69 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <!-- Define la codificación de caracteres y la configuración de la vista móvil -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Título de la página -->
   <title>FlowTrack — Análisis de Actividad</title>
 
+  <!-- Enlace a los archivos CSS para dar estilo a la lista general y a esta vista de detalle -->
   <link rel="stylesheet" href="./css/mis-actividades.css" /> 
   <link rel="stylesheet" href="./css/actividad.css" />
 
+  <!-- Inclusión de la librería Leaflet para mapas interactivos -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Inclusión de la librería Chart.js para gráficos de datos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+<!-- Clases CSS para el cuerpo de la página -->
 <body class="activities-page detail-view">
 
+  <!-- Cabecera superior de la aplicación -->
   <header class="topbar">
+    <!-- Navegación simple: Enlace a la página principal de actividades -->
     <div class="brand"><a href="mis-actividades.html">FlowTrack</a> / Análisis</div>
     <div class="actions">
+        <!-- Botón para volver a la lista principal -->
         <a href="mis-actividades.html" class="btn-ghost">← Volver</a>
     </div>
   </header>
 
+  <!-- Contenido principal de la vista de detalle -->
   <main class="main-detail">
       
+    <!-- Sección de cabecera de la actividad (usa clase card-panel para estilo de tarjeta) -->
     <section class="detail-header card-panel">
+        <!-- Título que se completará con JavaScript -->
         <h1 id="act-title">Cargando...</h1>
+        <!-- Metadatos de la actividad que se completarán con JavaScript -->
         <div class="detail-meta" id="act-meta"></div>
     </section>
 
+    <!-- Contenedor principal con diseño de cuadrícula para organizar paneles -->
     <div class="detail-grid">
         
+        <!-- Columna izquierda: Métricas, Mapa y Gráficos de Zonas -->
         <div class="info-column">
             
+            <!-- Panel de Estadísticas y Rendimiento -->
             <section class="metrics-panel card-panel">
                 <h2>Estadísticas y Rendimiento</h2>
+                <!-- Contenedor donde JS insertará las tarjetas de métricas -->
                 <div class="metrics-grid" id="metrics-container">
                     <div class="loading-placeholder">Calculando métricas...</div>
                 </div>
             </section>
 
+            <!-- Panel del Mapa -->
             <section class="map-panel card-panel">
+                <!-- Contenedor donde Leaflet renderizará el mapa -->
                 <div id="map-detail" class="map-container"></div>
             </section>
 
+            <!-- Panel de Zonas de Frecuencia Cardíaca (se completa con Chart.js) -->
             <section class="zones-panel card-panel">
                 <h2>Zonas Frecuencia Cardíaca</h2>
                 <div class="chart-container-wrapper" style="height: 200px;">
@@ -50,6 +71,7 @@
                 </div>
             </section>
 
+            <!-- Panel de Dureza del Terreno (Pendiente) (se completa con Chart.js) -->
             <section class="zones-panel card-panel" style="margin-top: 20px;">
                 <h2>Dureza del Terreno (Pendiente)</h2>
                 <div class="chart-container-wrapper" style="height: 200px;">
@@ -58,8 +80,10 @@
             </section>
         </div>
 
+        <!-- Columna derecha: Gráficos de Evolución Temporal -->
         <div class="charts-column">
             
+            <!-- Gráfico de Elevación -->
             <section class="chart-panel card-panel">
                 <h3>Perfil de Elevación</h3>
                 <div class="chart-container-wrapper">
@@ -67,6 +91,7 @@
                 </div>
             </section>
             
+            <!-- Gráfico de Velocidad -->
             <section class="chart-panel card-panel">
                 <h3>Velocidad (km/h)</h3>
                 <div class="chart-container-wrapper">
@@ -74,6 +99,7 @@
                 </div>
             </section>
 
+            <!-- Gráfico de Frecuencia Cardíaca -->
             <section class="chart-panel card-panel">
                 <h3>Frecuencia Cardíaca (bpm)</h3>
                 <div class="chart-container-wrapper">
@@ -81,6 +107,7 @@
                 </div>
             </section>
 
+            <!-- Gráfico de Cadencia -->
             <section class="chart-panel card-panel">
                 <h3>Cadencia (rpm)</h3>
                 <div class="chart-container-wrapper">
@@ -92,10 +119,12 @@
     </div>
   </main>
 
+  <!-- Pie de página -->
   <footer class="footer">
     <small>FlowTrack — Análisis potenciado por Strava y Cycling Analytics</small>
   </footer>
 
+  <!-- Script JavaScript principal que gestiona la lógica de esta página de detalle -->
   <script src="./js/actividad.js" type="module"></script>
 </body>
 </html>
